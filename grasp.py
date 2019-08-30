@@ -1,5 +1,19 @@
 import subprocess
+from shutil import copyfile
+import os
 from os import path
+def checkSmart(abspath):
+    if path.exists(abspath):
+        return True
+    else:
+        root,ext=path.splitext(abspath)
+        if path.exists(root+'.out'):
+            print(f'Copying {root}.out -> {root}.inp')
+            os.rename(root+'.out',root+'.inp')
+            return True
+        else:
+            return False
+
 
 class Routine(object):
     def __init__(self,name,inputs=[],outputs=[],params=[]):
@@ -8,9 +22,10 @@ class Routine(object):
         self.outputs=outputs
         self.params=params
     def execute(self,workdir):
+        self.workdir = workdir
         inputstr = ''.join(p+'\n' for p in self.params)
         for inp in self.inputs:
-            assert path.exists(path.join(workdir,inp)), f'{self.name}: The input file {inp} is missing'
+            assert checkSmart(path.join(workdir,inp)), f'{self.name}: The input file {inp} is missing'
         completedProcess = subprocess.run([self.name],
                 input=inputstr,
                 #capture_output=False,
@@ -23,9 +38,19 @@ class Routine(object):
 
 
         for outp in self.outputs:
-            assert(path.exists(path.join(workdir,outp)),f'{self.name}: The output file {outp} is missing')
+            assert path.exists(path.join(workdir,outp)),f'{self.name}: The output file {outp} is missing'
 
-coredict = {'He':1,'Ne':2,'Xe':5}
+
+class Rnucleus(Routine):
+    def __init__(self,Z,A,neutralMass,I,NDM,NQM):
+        params = [str(inp) for inp in [Z,A,'n',neutralMass,I,NDM,NQM]]
+        super().__init__(name='rnucleus',
+                         inputs=[],
+                         outputs=['isodata'],
+                         params=params)
+
+
+coredict = {'He':1,'Ne':2,'Ar':3,'Kr':4,'Xe':5}
 class Rcsfgenerate(Routine):
     def __init__(self,core,csflist,activeset,jlower,jhigher,exc):
         # todo: implement non-user specified ordering of orbital iteration
@@ -40,8 +65,63 @@ class Rcsfgenerate(Routine):
                          inputs=['clist.ref'],
                          outputs=['rcsf.out','rcsfgenerate.log'],
                          params=params)
+    def execute(self,workdir,writeMR=False):
+        # we might need to copy to a multiref file at the end
+        super().execute(workdir)
+        if writeMR:
+            copyfile(path.join(workdir,'rcsf.out'),
+                    path.join(workdir,'rcsfmr.inp'))
 
 
 
+hamiltoniandict = {'DC':1,'DCB':2}
 
+class Rcsfinteract(Routine):
+    def __init__(self,hamiltonian):
+        # todo: implement non-user specified ordering of orbital iteration
+        params = [str(hamiltoniandict[hamiltonian])]
+        super().__init__(name='rcsfinteract',
+                         inputs=['rcsfmr.inp','rcsf.inp'],
+                         outputs=['rcsf.out'],
+                         params=params)
 
+class Rangular(Routine):
+    def __init__(self):
+        params = ['y']
+        super().__init__(name='rangular',
+                         inputs=['rcsf.inp'],
+                         outputs=['rangular.log'],
+                         params=params)
+        # Also: rangular will make a bunch of mcp files which we won't keep track of
+
+methoddict = {'Thomas-Fermi':'2','Screened Hydrogenic':'3'}
+class Rwfnestimate(Routine):
+    def __init__(self,orbdict=None,fallback='Thomas-Fermi'):
+        if orbdict == None:
+            defaultorbs = {'*':os.path.join(self.workdir,'rwfn.out')}
+        params = ['y']
+        # make rwfnestimates, but save wildcard entry for last
+        for key in orbdict.keys():
+            if key != '*':
+                params.extend(['1',orbdict[key],key])
+        if '*' in orbdict.keys():
+            params.extend(['1',orbdict['*'],'*'])
+
+        params.extend([methoddict[fallback],'*']) # after looking up everything possible, make sure all orbitals are estimated according to the fallback method
+
+        super().__init__(name='rwfnestimate',
+                         inputs=['isodata','rcsf.inp']+list(orbdict.values()),
+                         outputs=['rwfn.inp'],
+                         params=params)
+
+class Rmcdhf(Routine):
+    def __init__(self,asfidx,orbs,runs):
+        #asf indices should be given as a list whose entries are lists of comma-separated serial numbers.
+        params = ['y']
+        params.extend(asfidx)
+        params.append(','.join(orbs))
+        params.append(str(runs))
+        super().__init__(name='rmcdhf',
+                         inputs = ['isodata','rcsf.inp','rwfn.inp'],
+                         outputs = ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log'],
+                         params=params)
