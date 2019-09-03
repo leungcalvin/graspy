@@ -48,6 +48,17 @@ class Routine(object):
 
 class Rnucleus(Routine):
     def __init__(self,Z,A,neutralMass,I,NDM,NQM):
+        """
+        Inputs:
+        -------
+        Z (int): atomic number of nucleus
+        A (int): mass number of nucleus
+        neutralMass (float): the mass (in amu) of the neutral atom
+        I (float): spin of the nucleus given as a decimal
+        NDM (float): nuclear dipole moment (nuclear magnetons)
+        NQM (float): nuclear quadrupole moment (barns)
+        ------
+        """
         params = [str(inp) for inp in [Z,A,'n',neutralMass,I,NDM,NQM]]
         super().__init__(name='rnucleus',
                          inputs=[],
@@ -55,14 +66,27 @@ class Rnucleus(Routine):
                          params=params)
 
 
-coredict = {'He':1,'Ne':2,'Ar':3,'Kr':4,'Xe':5}
+coredict = {'None':0,'He':1,'Ne':2,'Ar':3,'Kr':4,'Xe':5}
 class Rcsfgenerate(Routine):
     def __init__(self,core,csflist,activeset,jlower,jhigher,exc):
-        # todo: implement non-user specified ordering of orbital iteration
+        """
+        Inputs:
+        -------
+        core (str): 'None','He','Ne','Ar','Kr','Xe', or 'Rn'
+        csflist (list of str): electron configurations
+        activeset (list of ints): highest orbital numbers given as a list of quantum numbers in the order s,p,d,f,g,h,etc. So, [4,4,3] means the CSF expansion is truncated at 4s,4p,3d.
+        jlower (int): minimum 2*J value of the atom
+        jhigher (int): maximum 2*J value of the atom
+        exc (int): number of excitations from each config in multireference
+        TODO:
+        implement default ordering of orbital iteration
+        implement multiple different CSF lists with different jlower,jhigher
+        ------
+        """
         params = ['u',str(coredict[core])]
         params.extend(csflist)
         params.append('*') # end the CSF list
-        params.append(activeset)
+        params.append(','.join([str(n)+l for n,l in zip(activeset),['s','p','d','f','g','h','i','l']]))
         params.append(f'{jlower},{jhigher}')
         params.append(str(exc))
         params.append('n') # don't add another list of CSFs
@@ -79,11 +103,17 @@ class Rcsfgenerate(Routine):
 
 
 
-hamiltoniandict = {'DC':1,'DCB':2}
+hamiltoniandict = {'Dirac-Coulomb':1,'Dirac-Coulomb-Breit':2}
 
 class Rcsfinteract(Routine):
     def __init__(self,hamiltonian):
-        # todo: implement non-user specified ordering of orbital iteration
+        """
+        Inputs:
+        -------
+        hamiltonian (str): either 'Dirac-Coulomb' or 'Dirac-Coulomb-Breit'
+        -----
+        """
+        #
         params = [str(hamiltoniandict[hamiltonian])]
         super().__init__(name='rcsfinteract',
                          inputs=['rcsfmr.inp','rcsf.inp'],
@@ -92,16 +122,33 @@ class Rcsfinteract(Routine):
 
 class Rangular(Routine):
     def __init__(self):
+        """
+        Inputs:
+        -------
+        None.
+        TODO:
+        implement non-default angular integration parameters which I don't really understand
+        keep track of mcp output files which we won't keep track of
+        -------
+        """
         params = ['y']
         super().__init__(name='rangular',
                          inputs=['rcsf.inp'],
                          outputs=['rangular.log'],
                          params=params)
-        # Also: rangular will make a bunch of mcp files which we won't keep track of
 
 methoddict = {'Thomas-Fermi':'2','Screened Hydrogenic':'3'}
 class Rwfnestimate(Routine):
     def __init__(self,orbdict=None,fallback='Thomas-Fermi'):
+        """
+        Inputs:
+        -------
+        orbdict (dict): a dictionary whose keys are orbital designations (e.g. '5s,5p*' and whose values are relative filepaths from the working directory. If not supplied (not recommended because you will not be able to keep track of the calculation method), we will look for 'rwfn.out'.
+        fallback (str): Uses the 'Thomas-Fermi' or 'Screened Hydrogenic' method to generate all remaining orbitals
+        TODO:
+        implement non-default orbital generation parameters
+        ------
+        """
         if orbdict == None:
             defaultorbs = {'*':os.path.join(self.workdir,'rwfn.out')}
         params = ['y']
@@ -122,8 +169,14 @@ class Rwfnestimate(Routine):
 weightingmethods = {'Equal':'1','Standard':'5','User [unsupported!]':'9'}
 class Rmcdhf(Routine):
     def __init__(self,asfidx,orbs,specorbs,runs,weightingmethod):
-        #asf indices should be given as a list whose entries are lists of comma-separated integers which are the serial numbers accepted by GRASP.
-        #orbs should be a list of strings like ['6s','6p*'], denoting which orbitals for the RMCDHF routine to optimize
+        """
+        Inputs:
+        -------
+        asfidx (list of list of ints): list of list of GRASP atomic level serial numbers, block by block
+        orbs (list of str): list of orbital designations which are to be varied, e.g. ['5s','5d-','6p*']
+        runs (int): maximum number of SCF iterations
+        ------
+        """
         # runs is an integer denoting the maximum number of SCF iterations.
         params = ['y']
         params.extend( ','.join(str(level) for level in levels) for levels in asfidx)
@@ -138,6 +191,12 @@ class Rmcdhf(Routine):
 
 class Rsave(Routine):
     def __init__(self,calcname):
+        """
+        Inputs:
+        -------
+        name the calculation without a file extension.
+        ------
+        """
         super().__init__(name=f'rsave {calcname}',
                          inputs = ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log'],
                          outputs= [f'{calcname}.{ext}' for ext in ['c','m','w','sum','log']],
@@ -146,6 +205,18 @@ class Rsave(Routine):
 
 class Rci(Routine):
     def __init__(self,calcname,includetransverse,modifyfreq,scalefactor,includevacpol,includenms,includesms,estselfenergy,largestn,asfidx):
+        """
+        Inputs:
+        -------
+        calcname (str): provide the name of a RMCDHF calculation to use as the basis for an RCI calculation.
+        includetransverse (bool)
+        modifyfreq (bool)
+        scalefactor (str for now): '1.d-6' by default
+        includevacpol,includenms,includesms,estselfenergy: (bool)
+        largestn (int <= 8)
+        asfidx (list of list of ints): see rmcdhf
+        ------
+        """
         params = ['y',calcname]
         params.extend([booltoyesno(param) for param in [includetransverse,modifyfreq]])
         if includetransverse:
