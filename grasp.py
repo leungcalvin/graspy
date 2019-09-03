@@ -2,6 +2,13 @@ import subprocess
 from shutil import copyfile
 import os
 from os import path
+
+def booltoyesno(boolean):
+    if boolean:
+        return 'y'
+    else:
+        return 'n'
+
 def checkSmart(abspath):
     if path.exists(abspath):
         return True
@@ -35,8 +42,6 @@ class Routine(object):
                 encoding='utf8')
         #print(completedProcess.stdout)
         #print(completedProcess.stderr)
-
-
         for outp in self.outputs:
             assert path.exists(path.join(workdir,outp)),f'{self.name}: The output file {outp} is missing'
 
@@ -114,14 +119,44 @@ class Rwfnestimate(Routine):
                          outputs=['rwfn.inp'],
                          params=params)
 
+weightingmethods = {'Equal':'1','Standard':'5','User [unsupported!]':'9'}
 class Rmcdhf(Routine):
-    def __init__(self,asfidx,orbs,runs):
-        #asf indices should be given as a list whose entries are lists of comma-separated serial numbers.
+    def __init__(self,asfidx,orbs,specorbs,runs,weightingmethod):
+        #asf indices should be given as a list whose entries are lists of comma-separated integers which are the serial numbers accepted by GRASP.
+        #orbs should be a list of strings like ['6s','6p*'], denoting which orbitals for the RMCDHF routine to optimize
+        # runs is an integer denoting the maximum number of SCF iterations.
         params = ['y']
-        params.extend(asfidx)
+        params.extend( ','.join(str(level) for level in levels) for levels in asfidx)
+        params.append(weightingmethods[weightingmethod])
         params.append(','.join(orbs))
+        params.append(','.join(specorbs))
         params.append(str(runs))
         super().__init__(name='rmcdhf',
                          inputs = ['isodata','rcsf.inp','rwfn.inp'],
                          outputs = ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log'],
                          params=params)
+
+class Rsave(Routine):
+    def __init__(self,calcname):
+        super().__init__(name=f'rsave {calcname}',
+                         inputs = ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log'],
+                         outputs= [f'{calcname}.{ext}' for ext in ['c','m','w','sum','log']],
+                         params = [])
+
+
+class Rci(Routine):
+    def __init__(self,calcname,includetransverse,modifyfreq,scalefactor,includevacpol,includenms,includesms,estselfenergy,largestn,asfidx):
+        params = ['y',calcname]
+        params.extend([booltoyesno(param) for param in [includetransverse,modifyfreq]])
+        if includetransverse:
+            params.append(str(scalefactor))
+        params.extend([booltoyesno(param) for param in [includevacpol,includenms,includesms,estselfenergy]])
+        if estselfenergy:
+            params.append(str(largestn))
+        params.extend( ','.join(str(level) for level in levels) for levels in asfidx)
+        super().__init__(name = 'rci',
+                         inputs = [f'{calcname}.c',f'{calcname}.w'],
+                         outputs=[f'{calcname}.cm',f'{calcname}.csum',f'{calcname}.clog','rci.res'],
+                         params = params)
+
+
