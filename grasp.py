@@ -1,7 +1,20 @@
 import subprocess
-from shutil import copyfile
+from shutil import copyfile,move
 import os
 from os import path
+
+def initialize(workdir,clist):
+    """
+    Makes working directory and populates it with an orbital ordering by writing a workdir/clist.ref file
+    Inputs:
+    -------
+    workdir (str): Absolute path to new directory
+    clist (list of str): e.g. ['1s','2s','2p']
+    -------
+    """
+    os.mkdir(workdir)
+    with open(os.path.join(workdir,'clist.ref'),'w+') as clistfile:
+        clistfile.write(str(''.join(string+'\n') for string in clist))
 
 def booltoyesno(boolean):
     if boolean:
@@ -27,6 +40,9 @@ class Routine(object):
         self.name = name
         self.inputs=inputs
         self.outputs=outputs
+        print(f'{name}: {params}')
+        print(f'{name}: {inputs}')
+        print(f'{name}: {outputs}')
         self.params=params
     def execute(self,workdir):
         self.workdir = workdir
@@ -86,7 +102,7 @@ class Rcsfgenerate(Routine):
         params = ['u',str(coredict[core])]
         params.extend(csflist)
         params.append('*') # end the CSF list
-        params.append(','.join([str(n)+l for n,l in zip(activeset),['s','p','d','f','g','h','i','l']]))
+        params.append(','.join([str(n)+l for n,l in zip(activeset,['s','p','d','f','g','h','i','l'])]))
         params.append(f'{jlower},{jhigher}')
         params.append(str(exc))
         params.append('n') # don't add another list of CSFs
@@ -100,6 +116,9 @@ class Rcsfgenerate(Routine):
         if writeMR:
             copyfile(path.join(workdir,'rcsf.out'),
                     path.join(workdir,'rcsfmr.inp'))
+        # then move the .out file to a .inp file for the other functions
+        move(path.join(workdir,'rcsf.out'),
+             path.join(workdir,'rcsf.inp'))
 
 
 
@@ -143,14 +162,14 @@ class Rwfnestimate(Routine):
         """
         Inputs:
         -------
-        orbdict (dict): a dictionary whose keys are orbital designations (e.g. '5s,5p*' and whose values are relative filepaths from the working directory. If not supplied (not recommended because you will not be able to keep track of the calculation method), we will look for 'rwfn.out'.
+        orbdict (dict): a dictionary whose keys are orbital designations (e.g. '5s,5p*' and whose values are relative filepaths from the working directory. If not supplied (not recommended because you will not be able to keep track of the calculation method), we will look for 'rwfn.out' in the working directory.
         fallback (str): Uses the 'Thomas-Fermi' or 'Screened Hydrogenic' method to generate all remaining orbitals
         TODO:
         implement non-default orbital generation parameters
         ------
         """
         if orbdict == None:
-            defaultorbs = {'*':os.path.join(self.workdir,'rwfn.out')}
+            defaultorbs = {'*':'rwfn.out'}
         params = ['y']
         # make rwfnestimates, but save wildcard entry for last
         for key in orbdict.keys():
@@ -175,6 +194,8 @@ class Rmcdhf(Routine):
         asfidx (list of list of ints): list of list of GRASP atomic level serial numbers, block by block
         orbs (list of str): list of orbital designations which are to be varied, e.g. ['5s','5d-','6p*']
         runs (int): maximum number of SCF iterations
+        TODO: implement non-default node counting threshold
+        implement three grid parameters
         ------
         """
         # runs is an integer denoting the maximum number of SCF iterations.
@@ -229,5 +250,42 @@ class Rci(Routine):
                          inputs = [f'{calcname}.c',f'{calcname}.w'],
                          outputs=[f'{calcname}.cm',f'{calcname}.csum',f'{calcname}.clog','rci.res'],
                          params = params)
+
+#class Rcsfzerofirst(Routine):
+
+
+class Rmixextract(Routine):
+    def __init__(self,calcname,useCI,tolerance,sort):
+        params = [calcname]
+        params.append(booltoyesno(useCI))
+        params.append(str(tolerance))
+        params.append(booltoyesno(sort))
+        print(f'{calcname}.cm')
+        super().__init__(name = 'rmixextract',
+                    inputs = [f'{calcname}.cm'],
+                    outputs= ['rcsf.out'], #really?? shouldn't grasp name it something else
+                    params = params)
+
+class JJtoLSJ(Routine):
+    def __init__(self,calcname,useCI,unique):
+        params = [calcname,booltoyesno(useCI),booltoyesno(unique),'y'] #TODO: implement non-default settings
+        inputs = [f'{calcname}.c',f'{calcname}.cm']
+        outputs= [f'{calcname}.lsj.lbl'] # and maybe some others
+        super().__init__(name = 'jj2lsj',
+                    inputs = inputs,
+                    outputs= outputs,
+                    params = params)
+
+class Rlevels(Routine):
+    def __init__(self,calcname):
+        params = [f'{calcname}.cm',''] #newline to terminate calcname input
+        # TODO: implement multiple calculation results
+        super().__init__(name = 'rlevels',
+                    inputs = [f'{calcname}.cm'],
+                    outputs = [],
+                    params = params)
+    # TODO: implement multiple calculation results
+    # def execute(self):
+        # TODO: implement readout code here to return a nicely-formatted table of rlevels output
 
 
