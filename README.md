@@ -35,5 +35,5 @@ rlevels
 In addition, an `initialize()` function is provided to create new working directories. A sample calculation has been provided in `singlet-triplet.py`, demonstrating how a formerly complex calculation with many GRASP steps and many shell scripts can be consolidated into a single `.py` file.
 
 ## Acknowledgments
-This program was developed by Calvin Leung, with significant input from Alex Ozdemir and Joonseok Hur. If the community likes this tool, we might end up writing a small paper and would appreciate citations. But for now, just mention `graspy` in your papers. :)
+This program was developed by Calvin Leung, with significant input from Alex Ozdemir and Joonseok Hur. If you use this tool in your work, please mention it. Feel free to contact us with any questions or requests.
 
