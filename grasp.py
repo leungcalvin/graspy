@@ -12,7 +12,8 @@ def initialize(workdir,clist):
     clist (list of str): e.g. ['1s','2s','2p']
     -------
     """
-    os.mkdir(workdir)
+    if not os.path.exists(workdir):
+        os.makedirs(workdir)
     with open(os.path.join(workdir,'clist.ref'),'w+') as clistfile:
         clistfile.write(str(''.join(string+'\n') for string in clist))
 
@@ -99,17 +100,35 @@ class Rcsfgenerate(Routine):
         implement multiple different CSF lists with different jlower,jhigher
         ------
         """
-        params = ['u',str(coredict[core])]
-        params.extend(csflist)
-        params.append('*') # end the CSF list
-        params.append(','.join([str(n)+l for n,l in zip(activeset,['s','p','d','f','g','h','i','l'])]))
-        params.append(f'{jlower},{jhigher}')
-        params.append(str(exc))
-        params.append('n') # don't add another list of CSFs
+        self.header = ['u',str(coredict[core])]
+        self.subparams = csflist + ['*']
+        self.subparams.append(','.join([str(n)+l for n,l in zip(activeset,['s','p','d','f','g','h','i','l'])]))
+        self.subparams.append(f'{jlower},{jhigher}')
+        self.subparams.append(str(exc))
+        #params.extend(subparams)
+
+        #params.extend(csflist)
+        #params.append('*') # end the CSF list
+        #params.append(','.join([str(n)+l for n,l in zip(activeset,['s','p','d','f','g','h','i','l'])]))
+        #params.append(f'{jlower},{jhigher}')
+        #params.append(str(exc))
+        #params.append('n') # terminate input
         super().__init__(name='rcsfgenerate',
                          inputs=['clist.ref'],
                          outputs=['rcsf.out','rcsfgenerate.log'],
-                         params=params)
+                         params = self.header + self.subparams + ['n'])
+    def __add__(self,other):
+        # strip off the terminating 'n' line from self
+        # append a 'y' and the subparams from other
+        # put the 'n' back
+        assert self.header == other.header
+
+        summed = self.__new__(Rcsfgenerate)
+        Routine.__init__(summed, name='rcsfgenerate',inputs = ['clist.ref'], outputs = ['rcsf.out','rcsfgenerate.log'],params = self.header + self.subparams + ['y'] + other.subparams + ['n'])
+        summed.header = self.header
+        summed.subparams = self.subparams + ['y'] + other.subparams
+        return summed
+
     def execute(self,workdir,writeMR=False):
         # we might need to copy to a multiref file at the end
         super().execute(workdir)
