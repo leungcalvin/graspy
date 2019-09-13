@@ -1,6 +1,5 @@
 from grasp import *
 #This file implements the GRASP calculation documented here:
-#https://github.com/leungcalvin/vuletic/blob/3d0d463c11a5af4018d2a648f1db3602867eb892/172Yb/172Yb/script_1P1.out
 
 dir_6s2 = '/home/calvin/graspy/safronova/est_6s2'
 clistordering = ['1s','2s','2p','3s','3p','3d','4s','4p','4d','5s','5p','4f','5d','6s','6p','5f','6d','7p','8s']
@@ -82,12 +81,12 @@ zeros_odd = zeros_6s6p + zeros_4f5d
 
 multireference = zeros_odd + zeros_even
 
-singles_6s2 = Rcsfgenerate('Xe',['4f(14,*)6s(2,*)'],activeset=[7,6,5,5],jlower=0,jhigher=2,exc=1)
-singles_4f5d = Rcsfgenerate('Xe',['4f(14,*)5d(1,*)6s(1,*)'],activeset=[7,6,6,5],jlower=0,jhigher=10,exc=1)
+singles_6s2 = Rcsfgenerate('Xe',['4f(14,*)6s(2,*)'],activeset=[7,7,6,5],jlower=0,jhigher=2,exc=2)
+singles_4f5d = Rcsfgenerate('Xe',['4f(14,*)5d(1,*)6s(1,*)'],activeset=[7,7,6,5],jlower=0,jhigher=10,exc=2)
 singles_even = singles_6s2 + singles_4f5d
 
-singles_6s6p= Rcsfgenerate('Xe',['4f(14,*)6s(1,*)6p(1,*)',],activeset=[7,7,5,5],jlower=0,jhigher=6 ,exc=1)
-singles_4f5d= Rcsfgenerate('Xe',['4f(13,*)5d(1,*)6s(2,*)',],activeset=[7,6,6,5],jlower=0,jhigher=16,exc=1)
+singles_6s6p= Rcsfgenerate('Xe',['4f(14,*)6s(1,*)6p(1,*)',],activeset=[7,7,6,5],jlower=0,jhigher=6 ,exc=2)
+singles_4f5d= Rcsfgenerate('Xe',['4f(13,*)5d(1,*)6s(2,*)',],activeset=[7,7,6,5],jlower=0,jhigher=16,exc=2)
 singles_odd = singles_6s6p + singles_4f5d
 singles_exp = singles_even + singles_odd
 
@@ -96,13 +95,7 @@ singles_exp = singles_even + singles_odd
 # in order to get these indices automatically
 # note that one of the 1- levels is missing....
 
-indices_mr = [[5],[2,9],[4],[4,5,21,38,99],[4],[6,25,48,133,154],[2],[22,46,135,159],[14,35,69,93],[10,49,70],[28],[],[],[],[]]
-# using all the levels gives some weird CNUM error...let's only ask for the lowest level for now and diagnose the problem later
-# 154 is thep roblem
-#indices_mr = [[5],[2,9],[4],[4,5,21,38,99],[4],[6,25,48,133],[2],[22,46,135,159],[14,35,69,93],[10,49,70],[28],[],[],[],[]]
-#indices_mr = [[5],[2,9],[4],[4,5,21],[4],[6,25,48,133,154],[2],[22],[46],[14],[10],[28],[],[],[]]
-#indices_mr = [[1,2],[2,9],[4],[4,5,21,38,99],[4],[6],[2],[22],[46],[14],[10],[28],[],[],[]]
-indices_mr = [[1],[1],[ ],[1,2],[ ],[1,2],[ ],[1,2],[ ],[1],[],[1],[],[],[]]
+indices_mr = [[1],[1],[1],[1,2],[1],[1,2],[1],[1,2],[1],[1],[1],[1],[1],[1],[1]]
 ci_run = [
          Rnucleus(Z=70,A=172,neutralMass=171.936378,I=0,NDM=0,NQM=0),
          singles_exp,
