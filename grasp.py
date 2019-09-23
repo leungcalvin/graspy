@@ -1,3 +1,6 @@
+import pdb
+import numpy as np
+import pandas as pd
 import subprocess
 from shutil import copyfile,move
 import os
@@ -45,23 +48,35 @@ class Routine(object):
         print(f'{name}: {inputs}')
         print(f'{name}: {outputs}')
         self.params=params
+        self.hash=hash(self)
+
     def execute(self,workdir):
         self.workdir = workdir
         inputstr = ''.join(p+'\n' for p in self.params)
         for inp in self.inputs:
             assert checkSmart(path.join(workdir,inp)), f'{self.name}: The input file {inp} is missing'
-        completedProcess = subprocess.run([self.name],
+        process = subprocess.run([f'{self.name} | tee readout.temp'], # capture output to a temp file
                 input=inputstr,
-                #capture_output=False,
+                capture_output=False,
+                #stdout=subprocess.PIPE,
                 shell=True,
                 cwd=workdir,
                 check=True,
                 encoding='utf8')
-        #print(completedProcess.stdout)
-        #print(completedProcess.stderr)
         for outp in self.outputs:
             assert path.exists(path.join(workdir,outp)),f'{self.name}: The output file {outp} is missing'
+        # remove temp file
+        with open(os.path.join(workdir,'readout.temp')) as printout:
+            self.printout = printout.read().splitlines()
+        os.remove(os.path.join(workdir,'readout.temp'))
+        self.output = self.readout()
+        return self.output
 
+    def readout(self):
+        # Reads off the raw output of the shell command by default, meant to be overloaded
+        # Overload this with a function that takes in self.printout and returns something useful to the computation
+        print('superclass method called')
+        return self.printout
 
 class Rnucleus(Routine):
     def __init__(self,Z,A,neutralMass,I,NDM,NQM):
@@ -158,18 +173,42 @@ class Rcsfinteract(Routine):
                          outputs=['rcsf.out'],
                          params=params)
 
+class Rcsfzerofirst(Routine):
+    def __init__(self,small_exp,big_exp):
+        super().__init__(name='rcsfzerofirst',
+                       inputs=[small_exp,big_exp],
+                       outputs=['rcsf.out'],
+                       params=[small_exp,big_exp])
+
+class Rmixaccumulate(Routine):
+    def __init__(self,calcname,useCI,truncate_eps):
+        inputs = [f'{calcname}.cm',f'{calcname}.c']
+        params = [calcname,booltoyesno(useCI),str(truncate_eps),'y'] # always sort by mixing coeff
+
+        super().__init__(name='rmixaccumulate',
+                         inputs=inputs,
+                         outputs=['rcsf.out'],
+                         params=params)
+
+    def readout(self):
+        idx = self.printout.index('         block        ncf') + 1 # start reading iccut on the next line
+        iccuttable = pd.DataFrame([line.split() for line in self.printout[idx:]],dtype=float)
+        print('called subclass method')
+        return [int(val) for val in iccuttable.values[:,1]] #a value for each block
+
 class Rangular(Routine):
-    def __init__(self):
+    def __init__(self,iccut=None):
         """
         Inputs:
         -------
-        None.
-        TODO:
-        implement non-default angular integration parameters which I don't really understand
-        keep track of mcp output files which we won't keep track of
+        None necessary, but you can put in a zero and first order partition ICCUT returned by Rmixaccumulate.execute().
         -------
         """
-        params = ['y']
+        if iccut == None:
+            params = ['y']
+        else:
+            params = ['n']
+            params.extend([str(e) for e in iccut])
         super().__init__(name='rangular',
                          inputs=['rcsf.inp'],
                          outputs=['rangular.log'],
@@ -270,7 +309,6 @@ class Rci(Routine):
                          outputs=[f'{calcname}.cm',f'{calcname}.csum',f'{calcname}.clog','rci.res'],
                          params = params)
 
-#class Rcsfzerofirst(Routine):
 
 
 class Rmixextract(Routine):
@@ -304,7 +342,16 @@ class Rlevels(Routine):
                     outputs = [],
                     params = params)
     # TODO: implement multiple calculation results
-    # def execute(self):
-        # TODO: implement readout code here to return a nicely-formatted table of rlevels output
+    def readout(self):
+        # reads off the energy levels into a table
+        tableheader,start,end = np.where([line[0:2] == '--' for line in self.printout])[0]
+        tableList = [line.split() for line in self.printout[start+1:end]]
+        print(tableList)
+        for line in tableList:
+            if len(line) < 8:
+                line.extend((8-len(line))*[''])
+        df = pd.DataFrame(tableList,columns= ['Number','Position','J','Parity','Energy Total','Levels','Splitting','Configuration'],dtype=float)
+        return df
+
 
 
