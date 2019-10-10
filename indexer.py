@@ -26,7 +26,7 @@ def parseCSFList(filename = 'rcsfmr.inp'):
             if JPblock in MR.keys():
                 MR[JPblock].append((content[lineidx],content[lineidx+1],content[lineidx+2]))
             else:
-                MR[JPblock] = [(content[lineidx],content[lineidx+1])]
+                MR[JPblock] = [(content[lineidx],content[lineidx+1],content[lineidx+2])]
             lineidx = lineidx+3
         else:
             lineidx = lineidx+1
@@ -37,7 +37,13 @@ def indexCSFList(queryCSFs,databaseCSFs):
     JPblocks.sort()
     asfidxes = []
     for block in JPblocks:
-        currentblockidx = list([databaseCSFs[block].index(CSF)+1 for CSF in queryCSFs[block]])# grasp indexes from one
+        currentblockidx = []
+        for CSF in queryCSFs[block]:
+            try:
+                currentblockidx.append(databaseCSFs[block].index(CSF)+1) # grasp indexes from one
+            except ValueError:
+                print(f'The CSF {CSF} of parity {block} was not found in the database, continuing...')
+
         asfidxes.append(currentblockidx)
         print('ASF Block: '+block)
         print(','.join([str(sn) for sn in currentblockidx]))
@@ -45,6 +51,7 @@ def indexCSFList(queryCSFs,databaseCSFs):
 
 def extractMRindices(workdir,mrfilename='rcsfmr.inp',expfilename='rcsf.inp'):
     query = parseCSFList(os.path.join(workdir,mrFilename))
+    print(query)
     database = parseCSFList(os.path.join(workdir,expFilename))
     asfidxes = indexCSFList(query,database)
 
