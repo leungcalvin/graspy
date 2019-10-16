@@ -1,4 +1,4 @@
-# graspy
+# GRASPy
 A python wrapper for atomic structure calculations with GRASP 2018.
 
 This package provides a Python interface to the GRASP 2018 program, which implements multiconfiguration Dirac-Hartree-Fock + Configuration Interaction calculations on single-atom systems.
@@ -35,7 +35,7 @@ rlevels
 rcsfzerofirst
 rmixaccumulate
 ```
-In addition, an `initialize()` function is provided to create new working directories. A sample calculation has been provided in `singlet-triplet.py`, in which we calculate the $.^3P_1$ levels and $.^1P_1^\circ$ levels of neutral ytterbium, demonstrating how a formerly complex calculation with many shell scripts can be consolidated into a single `.py` script.
+In addition, an `initialize()` function is provided to create new working directories. A sample calculation has been provided in `singlet-triplet.py`, in which we calculate the 3P1 and 1P1 levels of neutral ytterbium, demonstrating how a complex calculation with many different orbitals, each with their own DHF procedure, and a final CI run can be consolidated into a single `.py` script.
 
 ## Acknowledgments
 This program was developed by Calvin Leung, with significant input from Alex Ozdemir and Joonseok Hur. If you use this tool in your work, please mention it. Feel free to contact us with any questions or requests.
