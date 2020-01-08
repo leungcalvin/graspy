@@ -10,6 +10,9 @@ We hope this package will facilitate automatic exploration of the computational 
 
 We hope that condensing complex GRASP calculations into single Python scripts will make it easy to share calculation results with others as part of publications, and make these difficult, complex calculations fully reproducible and transparent to other members of the community.
 
+## How To Install
+With a working GRASP 2018 installation and Python 3.6+, GRASPy should work right out of the box. Interfacing from GRASPy to GRASP is done entirely via the `os.subprocess()`, and `pandas.read_csv` is used to read out GRASP output (e.g. subshell energies) for manipulation and plotting in Python scripts.
+
 ## Architecture
 Instead of executing a bunch of shell scripts in a particular folder as is documented in the GRASP 2018 manual,
 we introduce an object-oriented framework for inputting parameters to GRASP routines.
