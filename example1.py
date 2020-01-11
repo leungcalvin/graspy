@@ -12,7 +12,7 @@ ref1 = Rcsfgenerate(core='None',ordering = 'Default',
             activeset=[2],
             jlower=1,jhigher=1,exc=0)
 ref2 = Rcsfgenerate(core='None',ordering = 'Default',
-            csflist=['2s(2,i)2p(1,i)'],
+            csflist=['1s(2,i)2p(1,i)'],
             activeset = [1,2],
             jlower=1,jhigher=3,exc=0)
 mr = ref1 + ref2
