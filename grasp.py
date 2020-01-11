@@ -6,7 +6,7 @@ from shutil import copyfile,move
 import os
 from os import path
 
-def initialize(workdir,clist):
+def initialize(workdir,clist=None):
     """
     Makes working directory and populates it with an orbital ordering by writing a workdir/clist.ref file
     Inputs:
@@ -17,8 +17,9 @@ def initialize(workdir,clist):
     """
     if not os.path.exists(workdir):
         os.makedirs(workdir)
-    with open(os.path.join(workdir,'clist.ref'),'w+') as clistfile:
-        clistfile.write(str(''.join(string+'\n') for string in clist))
+    if clist is not None:
+        with open(os.path.join(workdir,'clist.ref'),'w+') as clistfile:
+            clistfile.write(str(''.join(string+'\n') for string in clist))
 
 def booltoyesno(boolean):
     if boolean:
@@ -99,8 +100,9 @@ class Rnucleus(Routine):
 
 
 coredict = {'None':0,'He':1,'Ne':2,'Ar':3,'Kr':4,'Xe':5}
+orderingdict = {'Default':'*','Reverse':'r','Symmetry':'s','User specified':'u'}
 class Rcsfgenerate(Routine):
-    def __init__(self,core,csflist,activeset,jlower,jhigher,exc):
+    def __init__(self,core,csflist,activeset,jlower,jhigher,exc,ordering='Default'):
         """
         Inputs:
         -------
@@ -115,7 +117,7 @@ class Rcsfgenerate(Routine):
         implement multiple different CSF lists with different jlower,jhigher
         ------
         """
-        self.header = ['u',str(coredict[core])]
+        self.header = [orderingdict[ordering],str(coredict[core])]
         self.subparams = csflist + ['*']
         self.subparams.append(','.join([str(n)+l for n,l in zip(activeset,['s','p','d','f','g','h','i','l'])]))
         self.subparams.append(f'{jlower},{jhigher}')
@@ -129,7 +131,7 @@ class Rcsfgenerate(Routine):
         #params.append(str(exc))
         #params.append('n') # terminate input
         super().__init__(name='rcsfgenerate',
-                         inputs=['clist.ref'],
+                         inputs=[],
                          outputs=['rcsf.out','rcsfgenerate.log'],
                          params = self.header + self.subparams + ['n'])
     def __add__(self,other):
@@ -139,7 +141,7 @@ class Rcsfgenerate(Routine):
         assert self.header == other.header
 
         summed = self.__new__(Rcsfgenerate)
-        Routine.__init__(summed, name='rcsfgenerate',inputs = ['clist.ref'], outputs = ['rcsf.out','rcsfgenerate.log'],params = self.header + self.subparams + ['y'] + other.subparams + ['n'])
+        Routine.__init__(summed, name='rcsfgenerate',inputs = [], outputs = ['rcsf.out','rcsfgenerate.log'],params = self.header + self.subparams + ['y'] + other.subparams + ['n'])
         summed.header = self.header
         summed.subparams = self.subparams + ['y'] + other.subparams
         return summed
@@ -226,20 +228,25 @@ class Rwfnestimate(Routine):
         implement non-default orbital generation parameters
         ------
         """
-        if orbdict == None:
-            defaultorbs = {'*':'rwfn.out'}
         params = ['y']
-        # make rwfnestimates, but save wildcard entry for last
-        for key in orbdict.keys():
-            if key != '*':
-                params.extend(['1',orbdict[key],key])
-        if '*' in orbdict.keys():
-            params.extend(['1',orbdict['*'],'*'])
+        addtl_files = []
+        if orbdict == None:
+        # no file input
+            defaultorbs = {'*':'rwfn.out'}
+        else:
+        # get file input, saving wildcard entry for last
+            for key in orbdict.keys():
+                if key != '*':
+                    params.extend(['1',orbdict[key],key])
+                    addtl_files.append(orbdict[key])
+            if '*' in orbdict.keys():
+                params.extend(['1',orbdict['*'],'*'])
+                addtl_files.append(orbdict['*'])
 
         params.extend([methoddict[fallback],'*']) # after looking up everything possible, make sure all orbitals are estimated according to the fallback method
 
         super().__init__(name='rwfnestimate',
-                         inputs=['isodata','rcsf.inp']+list(orbdict.values()),
+                         inputs=['isodata','rcsf.inp']+addtl_files,
                          outputs=['rwfn.inp'],
                          params=params)
 
