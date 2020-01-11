@@ -89,3 +89,10 @@ CI_2P = [
         ]
 
 [cmd.execute(workdir = testdir) for cmd in CI_2P]
+
+transitions_2P = [
+        Rhfs(calcname = '2p_3',useCI=True),
+        Rbiotransform(useCI=True,calcname_initial = '2s_3',calcname_final = '2p_3', transform_all = True),
+        Rtransition(useCI=True,calcname_initial = '2s_3',calcname_final = '2p_3',transition_spec = ['E1'])]
+
+[cmd.execute(workdir = testdir) for cmd in transitions_2P]
