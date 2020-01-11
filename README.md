@@ -14,7 +14,7 @@ We hope that condensing complex GRASP calculations into single Python scripts wi
 With a working GRASP 2018 installation and Python 3.6+, GRASPy should work right out of the box. Interfacing from GRASPy to GRASP is done entirely via the `os.subprocess()`, and `pandas.read_csv` is used to read out GRASP output (e.g. subshell energies) for manipulation and plotting in Python scripts.
 
 ## How to Use
-In the GRASP 2018 manual, several calculation examples are provided. As a pedagogical example, we have transcribed the first example: the calculation of the 1s^2 2s ^2 S$ and 1s^2 2p .^2P levels in Li I|into a Python script (`example1.py`). 
+As a pedagogical example, we have transcribed the first example , which calculates the 1s2 2s 2S and 1s2 2p 2P levels in Li I, into a Python script (`example1.py`). Running `python example1.py` will produce a directory `example1/` and output files inside.
 
 ## Architecture
 Instead of executing a bunch of shell scripts in a particular folder as is documented in the GRASP 2018 manual,
@@ -25,7 +25,7 @@ Creation of an object allows users to specify calculation parameters which were 
 At runtime, GRASPy checks that all input files are present, and then runs the calculation in a specified working directory, printing output to the terminal--just as if you were running GRASP from the command line manually.
 
 ## Current State
-So far, the following GRASP routines can be called in GRASPy, and some work is being done to implement non-default calculation settings for many of these routines.
+So far, the following GRASP routines can be called in GRASPy. Not all non-default options have been implemented.
 
 ```
 rnucleus
@@ -46,5 +46,5 @@ rtransition
 ```
 
 ## Acknowledgments
-This program was developed by Calvin Leung, with significant input from Alex Ozdemir and Joonseok Hur. If you use this tool in your work, please mention it. Feel free to contact us with any questions or requests.
+This program was developed by Calvin Leung (myself), with significant input from Alex Ozdemir and Joonseok Hur. Feel free to contact me with any questions or special requests.
 
