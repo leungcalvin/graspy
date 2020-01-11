@@ -65,7 +65,7 @@ class Routine(object):
                 check=True,
                 encoding='utf8')
         for outp in self.outputs:
-            assert path.exists(path.join(workdir,outp)),f'{self.name}: The output file {outp} is missing'
+            assert path.exists(path.join(workdir,outp)),f'{self.name} failed to produce {outp}. This was the input to {self.name}:{self.params}'
         # remove temp file
         with open(os.path.join(workdir,'readout.temp')) as printout:
             self.printout = printout.read().splitlines()
@@ -360,5 +360,50 @@ class Rlevels(Routine):
         df = pd.DataFrame(tableList,columns= ['Number','Position','J','Parity','Energy Total','Levels','Splitting','Configuration'],dtype=float)
         return df
 
+class Rhfs(Routine):
+    def __init__(self,calcname,useCI):
+        """
+        Inputs:
+        calcname (str): name of calculation without file extension, e.g. 2p_3
+        useCI (bool) : use mixing coefficients from CI calculation?
+        """
+        params = ['y',calcname,booltoyesno(useCI)] #TODO: implement non-default settings
+        inputs = ['isodata',f'{calcname}.w',f'{calcname}.c',f'{calcname}.cm']
+        outputs= [f'{calcname}.ch',f'{calcname}.choffd'] # and maybe some others
+        super().__init__(name = 'rhfs',
+                    inputs = inputs,
+                    outputs= outputs,
+                    params = params)
 
-
+class Rbiotransform(Routine):
+    def __init__(self,useCI,calcname_initial,calcname_final,transform_all=True):
+        """
+        Inputs:
+        useCI (bool) : use mixing coefficients from CI calculation?
+        calcname_initial (str): name of calculation without file extension, e.g. 2s_3
+        calcname_final (str): name of calculation without file extension, e.g. 2p_3. Order of initial/final doesn't matter.
+        transform_all (bool): Transform all J symmetries? Default True.
+        """
+        params = ['y',booltoyesno(useCI),calcname_initial,calcname_final,booltoyesno(transform_all)] #TODO: implement non-default settings
+        inputs = ['isodata',f'{calcname_initial}.c',f'{calcname_initial}.cm',f'{calcname_initial}.w',f'{calcname_final}.c',f'{calcname_final}.cm',f'{calcname_final}.w']
+        outputs = [f'{calcname_initial}.cbm',f'{calcname_initial}.bw',f'{calcname_initial}.TB',f'{calcname_final}.cbm',f'{calcname_final}.bw',f'{calcname_final}.TB']
+        super().__init__(name = 'rbiotransform',
+                    inputs = inputs,
+                    outputs= outputs,
+                    params = params)
+class Rtransition(Routine):
+    def __init__(self,useCI,calcname_initial,calcname_final,transition_spec):
+        """
+        Inputs:
+        useCI (bool) : use mixing coefficients from CI calculation?
+        calcname_initial (str): name of calculation without file extension, e.g. 2s_3
+        calcname_final (str): name of calculation without file extension, e.g. 2p_3. Order of initial/final doesn't matter.
+        transition_spec (list of str): E.g. ['E1','M2']
+        """
+        params = ['y',booltoyesno(useCI),calcname_initial,calcname_final, ','.join(transition_spec)] #TODO: implement non-default settings
+        inputs = ['isodata',f'{calcname_final}.w',f'{calcname_final}.bw',f'{calcname_final}.cbm',f'{calcname_initial}.w',f'{calcname_initial}.bw',f'{calcname_initial}.cbm',]
+        outputs= [f'{calcname_initial}.{calcname_final}.ct',f'{calcname_initial}.{calcname_final}.-1T']
+        super().__init__(name = 'rtransition',
+                    inputs = inputs,
+                    outputs= outputs,
+                    params = params)
