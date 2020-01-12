@@ -1,22 +1,25 @@
 from grasp import *
-
-# This implements the GRASP 2018 calculation for 1s2 2s 2S and 1s2 2p 2P in Li I, as found in the GRASP 2018 manual.
-
-testdir = '/home/calvin/graspy/example1'
+#
+# This implements the GRASP 2018 calculation for 1s2 2s 2S and 1s2 2p 2P in Li I, as found in the GRASP 2018 manual, using the GRASPy interface.
+#
+testdir = './example1-test'
 initialize(workdir=testdir)
 
-# rcsfgenerate generates list of CSFs for 2S and 2P with 3 CSFs.
-
-ref1 = Rcsfgenerate(core='None',ordering = 'Default',
+# 1) Generate a multireference consisting of the 1s2 2s and 1s2 2p configurations
+ref_2s = Rcsfgenerate(core='None',ordering = 'Default',
             csflist=['1s(2,i)2s(1,i)'],
             activeset=[2],
             jlower=1,jhigher=1,exc=0)
-ref2 = Rcsfgenerate(core='None',ordering = 'Default',
+ref_2p = Rcsfgenerate(core='None',ordering = 'Default',
             csflist=['1s(2,i)2p(1,i)'],
             activeset = [1,2],
             jlower=1,jhigher=3,exc=0)
-mr = ref1 + ref2
-mr.execute(workdir = testdir, writeMR=True) # define the multireference
+
+# The three states which make up the multireference can be added together with arithmetic.
+mr = ref_2s + ref_2p
+mr.execute(workdir = testdir, writeMR=True) #the execute() method performs the actual call to GRASP 2018.
+
+# 2) Perform a SCF procedure to solve for the 1s,2s,2p orbitals.
 MR_DHF =[
         Rnucleus(Z=3,A=7,neutralMass=6.941,I=1.5,NDM=3.2564268,NQM=-0.04),
         Rangular(),
@@ -26,12 +29,14 @@ MR_DHF =[
         ]
 [cmd.execute(workdir = testdir) for cmd in MR_DHF]
 
+# 3) Generate a CAS expansion from the 2S configuration.
 CAS_2S_exp = Rcsfgenerate(core='None',ordering = 'Default',
             csflist=['1s(2,*)2s(1,*)'],
             activeset=[3,3,3],
             jlower=1,jhigher=1,exc=3)
 CAS_2S_exp.execute(workdir = testdir)
 
+# 4) Solve for the n=3 correlation orbitals, using orbitals generated from 2s_2p_DF.w above.
 indices_2S = [[1]]
 CAS_2S = [
         Rangular(),
@@ -44,6 +49,7 @@ CAS_2S = [
         ]
 [cmd.execute(workdir = testdir) for cmd in CAS_2S]
 
+# 5) Perform CI on the 2S expansion.
 CI_2S = [
         Rci(calcname='2s_3',
                 includetransverse=True,
@@ -58,6 +64,8 @@ CI_2S = [
         JJtoLSJ(calcname= '2s_3',useCI = True, unique = True),
         ]
 [cmd.execute(workdir = testdir) for cmd in CI_2S]
+
+# 6) Generate a CAS expansion from the 2P configuration.
 CAS_2P_exp = Rcsfgenerate(core='None',ordering = 'Default',
             csflist=['1s(2,*)2p(1,*)'],
             activeset=[3,3,3],
@@ -65,6 +73,7 @@ CAS_2P_exp = Rcsfgenerate(core='None',ordering = 'Default',
 
 CAS_2P_exp.execute(workdir = testdir, writeMR = False)
 
+# 7) Solve for the n=3 correlation orbitals, using orbitals generated from 2s_2p_DF.w above.
 indices_2P = [[1],[1]]
 CAS_2P = [
         Rangular(),
@@ -74,6 +83,7 @@ CAS_2P = [
         ]
 [cmd.execute(workdir = testdir) for cmd in CAS_2P]
 
+# 8) Perform CI on the 2P expansion.
 CI_2P = [
         Rci(calcname='2p_3',
                 includetransverse=True,
@@ -87,9 +97,9 @@ CI_2P = [
                 asfidx = indices_2P),
         JJtoLSJ(calcname= '2p_3',useCI = True, unique = True),
         ]
-
 [cmd.execute(workdir = testdir) for cmd in CI_2P]
 
+# 9) Calculate transitions.
 transitions_2P = [
         Rhfs(calcname = '2p_3',useCI=True),
         Rbiotransform(useCI=True,calcname_initial = '2s_3',calcname_final = '2p_3', transform_all = True),
