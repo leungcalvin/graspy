@@ -50,5 +50,5 @@ rtransition
 ```
 
 ## Acknowledgments
-This program was developed by Calvin Leung (myself), with significant input from Alex Ozdemir and Joonseok Hur. Feel free to contact me with any questions or special requests.
+This program was developed by Calvin Leung (myself), with significant input from Alex Ozdemir and Joonseok Hur. Feel free to contact me with any questions, feedbacks, or special requests.
 
