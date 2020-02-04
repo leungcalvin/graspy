@@ -156,6 +156,24 @@ class Rcsfgenerate(Routine):
         move(path.join(workdir,'rcsf.out'),
              path.join(workdir,'rcsf.inp'))
 
+list_to_designation = lambda orblist: ','.join([str(n)+l for n,l in zip(orblist,['s','p','d','f','g','h','i','l'])])
+
+class Rcsfsplit(Routine):
+    def __init__(self,calcname,nsplit,splitorbs):
+        if type(splitorbs[0]) is int: # if splits are specified by maximum principal quantum number value
+            splitnames = [str(n) for n in splitorbs]
+            splitorbs = [[n]*n for n in splitorbs]
+            print(splitnames,'splitnames')
+        else: # generate default splitnames
+            splitnames = [str(n) for n in range(nsplit)]
+        params = [calcname,str(nsplit)]
+        for splitname,splitorb in zip(splitnames,splitorbs):
+            params.append(list_to_designation(splitorb))
+            params.append(splitname)
+        super().__init__(name=f'rcsfsplit',
+                         inputs = [f'{calcname}.c'],
+                         outputs= [f'{calcname}{ext}.c' for ext in splitnames],
+                         params = params)
 
 
 hamiltoniandict = {'Dirac-Coulomb':1,'Dirac-Coulomb-Breit':2}
