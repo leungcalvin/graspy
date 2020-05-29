@@ -145,17 +145,19 @@ class Rcsfgenerate(Routine):
         Routine.__init__(summed, name='rcsfgenerate',inputs = [], outputs = ['rcsf.out','rcsfgenerate.log'],params = self.header + self.subparams + ['y'] + other.subparams + ['n'])
         summed.header = self.header
         summed.subparams = self.subparams + ['y'] + other.subparams
-        name,ext=  os.splitext(self.write_csf)
-        othername,ext=  os.splitext(other.write_csf)
+        name,ext=  os.path.splitext(self.write_csf)
+        othername,ext=  os.path.splitext(other.write_csf)
         summed.write_csf = f'{name}_{othername}.ext'
         return summed
 
     def execute(self,workdir):
-        # we might need to copy to a multiref file at the end
         super().execute(workdir)
-        copyfile(path.join(workdir,'rcsf.out'),
-             path.join(workdir,self.write_csf))
-        # then move the .out file to a .inp file for the other functions
+        # if we need to write to a new file, e.g. a multiref
+        if self.write_csf != 'rcsf.out':
+            copyfile(path.join(workdir,'rcsf.out'),
+                 path.join(workdir,self.write_csf))
+
+        # no matter what, move the .out file to a .inp file for the other functions
         move(path.join(workdir,'rcsf.out'),
              path.join(workdir,'rcsf.inp'))
 
