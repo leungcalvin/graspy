@@ -146,8 +146,10 @@ class Rcsfgenerate(Routine):
         summed.header = self.header
         summed.subparams = self.subparams + ['y'] + other.subparams
         name,ext=  os.path.splitext(self.write_csf)
-        othername,ext=  os.path.splitext(other.write_csf)
-        summed.write_csf = f'{name}_{othername}.ext'
+        othername,otherext=  os.path.splitext(other.write_csf)
+        assert ext == otherext, "Multireferences need to have the same file suffix."
+
+        summed.write_csf = f'{"_".join([name,othername]).{ext}'
         return summed
 
     def execute(self,workdir):
