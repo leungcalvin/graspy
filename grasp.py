@@ -149,7 +149,7 @@ class Rcsfgenerate(Routine):
         othername,otherext=  os.path.splitext(other.write_csf)
         assert ext == otherext, "Multireferences need to have the same file suffix."
 
-        summed.write_csf = f'{"_".join([name,othername]).{ext}'
+        summed.write_csf = f'{"_".join([name,othername])}.{ext}'
         return summed
 
     def execute(self,workdir):
