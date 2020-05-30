@@ -19,7 +19,9 @@ def initialize(workdir,clist=None):
         os.makedirs(workdir)
     if clist is not None:
         with open(os.path.join(workdir,'clist.ref'),'w+') as clistfile:
-            clistfile.write(str(''.join(string+'\n') for string in clist))
+            # clistfile.write([str(''.join(string+'\n')) for string in clist])
+            for c in clist:
+                clistfile.write("%s\n" % c)
 
 def booltoyesno(boolean):
     if boolean:
@@ -78,8 +80,27 @@ class Routine(object):
         print('superclass method called')
         return self.printout
 
+class CSFRoutine(Routine):
+    """ A CSFRoutine is anything that produces a CSF file as rcsf.out. Since other routines need to read from places like rcsf.inp and rcsfmr.inp, we'll overload the execute() routine to include some file management. We need to make sure that we have a self.write_csf attribute."""
+    def execute(self,workdir):
+        print('Calling CSFRoutine execute with directory mgmt!')
+        assert hasattr(self,'write_csf')
+        super().execute(workdir)
+        # if we want to keep a log file somewhere, move it over.
+        if self.write_log != 'rcsfgenerate.log':
+            move(path.join(workdir,'rcsfgenerate.log'),
+                 path.join(workdir,self.write_log))
+        # if we need to write to a new file, e.g. a multiref
+        if self.write_csf != 'rcsf.out':
+            copyfile(path.join(workdir,'rcsf.out'),
+                 path.join(workdir,self.write_csf))
+
+        # no matter what, move the .out file to a .inp file for the other functions
+        move(path.join(workdir,'rcsf.out'),
+             path.join(workdir,'rcsf.inp'))
+
 class Rnucleus(Routine):
-    def __init__(self,Z,A,neutralMass,I,NDM,NQM):
+    def __init__(self,Z,A,neutralMass,I,NDM,NQM,rms_radius = None,thickness= None):
         """
         Inputs:
         -------
@@ -89,17 +110,24 @@ class Rnucleus(Routine):
         I (float): spin of the nucleus given as a decimal
         NDM (float): nuclear dipole moment (nuclear magnetons)
         NQM (float): nuclear quadrupole moment (barns)
+        rms_radius (float): root mean squared radius of nucleus (fm)
+        thickness (float): skin thickness of nucleus (fm)
+
         ------
         """
-        params = [str(inp) for inp in [Z,A,'n',neutralMass,I,NDM,NQM]]
+        if rms_radius is not None and thickness is not None:
+            params = [str(inp) for inp in [Z,A,'y',rms_radius,thickness, neutralMass, I, NDM, NQM]]
+        else:
+            params = [str(inp) for inp in [Z,A,'n',neutralMass,I,NDM,NQM]]
         super().__init__(name='rnucleus',
                          inputs=[],
-                         outputs=['isodata'],
-                         params=params)
+                         params = params,
+                         outputs = ['isodata'])
 
 
 coredict = {'None':0,'He':1,'Ne':2,'Ar':3,'Kr':4,'Xe':5}
 orderingdict = {'Default':'*','Reverse':'r','Symmetry':'s','User specified':'u'}
+
 class Rcsfgenerate(Routine):
     def __init__(self,core,csflist,activeset,jlower,jhigher,exc,ordering='Default', write_csf = 'rcsf.out'):
         """
@@ -145,11 +173,14 @@ class Rcsfgenerate(Routine):
         Routine.__init__(summed, name='rcsfgenerate',inputs = [], outputs = ['rcsf.out','rcsfgenerate.log'],params = self.header + self.subparams + ['y'] + other.subparams + ['n'])
         summed.header = self.header
         summed.subparams = self.subparams + ['y'] + other.subparams
-        name,ext=  os.path.splitext(self.write_csf)
-        othername,otherext=  os.path.splitext(other.write_csf)
-        assert ext == otherext, "Multireferences need to have the same file suffix."
+        if self.write_csf == other.write_csf:
+            summed.write_csf = self.write_csf
+        else:
+            name,ext=  os.path.splitext(self.write_csf)
+            othername,otherext=  os.path.splitext(other.write_csf)
+            assert ext == otherext, "Multireferences need to have the same file suffix."
 
-        summed.write_csf = f'{"_".join([name,othername])}.{ext}'
+            summed.write_csf = f'{"_".join([name,othername])}{ext}'
         return summed
 
     def execute(self,workdir):
@@ -186,7 +217,7 @@ class Rcsfsplit(Routine):
 hamiltoniandict = {'Dirac-Coulomb':1,'Dirac-Coulomb-Breit':2}
 
 class Rcsfinteract(Routine):
-    def __init__(self,hamiltonian):
+    def __init__(self,hamiltonian,write_csf = 'rcsf.out'):
         """
         Inputs:
         -------
@@ -194,21 +225,34 @@ class Rcsfinteract(Routine):
         -----
         """
         #
+        self.write_csf = write_csf
         params = [str(hamiltoniandict[hamiltonian])]
         super().__init__(name='rcsfinteract',
                          inputs=['rcsfmr.inp','rcsf.inp'],
                          outputs=['rcsf.out'],
                          params=params)
 
-class Rcsfzerofirst(Routine):
-    def __init__(self,small_exp,big_exp):
+    def execute(self,workdir):
+        super().execute(workdir)
+        # if we need to write to a new file, e.g. a multiref
+        if self.write_csf != 'rcsf.out':
+            copyfile(path.join(workdir,'rcsf.out'),
+                 path.join(workdir,self.write_csf))
+
+        # no matter what, move the .out file to a .inp file for the other functions
+        move(path.join(workdir,'rcsf.out'),
+             path.join(workdir,'rcsf.inp'))
+
+class Rcsfzerofirst(CSFRoutine):
+    def __init__(self,small_exp,big_exp,write_csf = 'rcsf.out'):
         super().__init__(name='rcsfzerofirst',
                        inputs=[small_exp,big_exp],
                        outputs=['rcsf.out'],
                        params=[small_exp,big_exp])
 
 class Rmixaccumulate(Routine):
-    def __init__(self,calcname,useCI,truncate_eps):
+    def __init__(self,calcname,useCI,truncate_eps,write_csf = 'rcsf.out'):
+        self.write_csf = write_csf
         inputs = [f'{calcname}.cm',f'{calcname}.c']
         params = [calcname,booltoyesno(useCI),str(truncate_eps),'y'] # always sort by mixing coeff
 
@@ -216,6 +260,17 @@ class Rmixaccumulate(Routine):
                          inputs=inputs,
                          outputs=['rcsf.out'],
                          params=params)
+
+    def execute(self,workdir):
+        super().execute(workdir)
+        # if we need to write to a new file, e.g. a multiref
+        if self.write_csf != 'rcsf.out':
+            copyfile(path.join(workdir,'rcsf.out'),
+                 path.join(workdir,self.write_csf))
+
+        # no matter what, move the .out file to a .inp file for the other functions
+        move(path.join(workdir,'rcsf.out'),
+             path.join(workdir,'rcsf.inp'))
 
     def readout(self):
         idx = self.printout.index('         block        ncf') + 1 # start reading iccut on the next line
@@ -366,11 +421,14 @@ class JJtoLSJ(Routine):
                     params = params)
 
 class Rlevels(Routine):
-    def __init__(self,calcname):
-        params = [f'{calcname}.cm',''] #newline to terminate calcname input
+    def __init__(self,files):
+        if type(files) is str:
+            files = [files]
+
+        params = list(files).append('') #newline to terminate calcname input
         # TODO: implement multiple calculation results
         super().__init__(name = 'rlevels',
-                    inputs = [f'{calcname}.cm'],
+                    inputs = list(files),
                     outputs = [],
                     params = params)
     # TODO: implement multiple calculation results
