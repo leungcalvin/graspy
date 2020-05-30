@@ -2,14 +2,14 @@ from grasp import *
 #
 # This implements the GRASP 2018 calculation for 1s2 2s 2S and 1s2 2p 2P in Li I, as found in the GRASP 2018 manual, using the GRASPy interface.
 #
-testdir = './calc-output/example1'
+testdir = './calc-outputs/example1'
 initialize(workdir=testdir)
 
 # 1) Generate a multireference consisting of the 1s2 2s and 1s2 2p configurations
 ref_2s = Rcsfgenerate(core='None',ordering = 'Default',
             csflist=['1s(2,i)2s(1,i)'],
             activeset=[2],
-            jlower=1,jhigher=1,exc=0,write_csf= '')
+            jlower=1,jhigher=1,exc=0,write_csf= 'rcsfmr.inp')
 ref_2p = Rcsfgenerate(core='None',ordering = 'Default',
             csflist=['1s(2,i)2p(1,i)'],
             activeset = [1,2],
