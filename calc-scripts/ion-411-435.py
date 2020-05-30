@@ -28,7 +28,7 @@ initialize(workdir = calc_dir, clist =
 
 def generate_6s_5d():
     cmdlist = [Rnucleus(Z=70,A=172,neutralMass=171.936378,I=0,NDM=0,NQM=0,rms_radius = 5.294,thickness = 2.18),
-               Rcsfgenerate('Xe',['4f(14,c)6s(1,i)'],activeset=[6,5,4,4],jlower=1,jhigher=1,exc=0,ordering = 'User specified') + Rcsfgenerate('Xe',['4f(14,c)5d(1,i)'],activeset=[5,5,5,4],jlower=3,jhigher=5,exc=0,ordering = 'User specified'),
+               Rcsfgenerate('Xe',['4f(14,c)6s(1,i)'],activeset=[6,5,4,4],jlower=1,jhigher=1,exc=0,ordering = 'User specified',write_csf = 'rcsfmr.inp') + Rcsfgenerate('Xe',['4f(14,c)5d(1,i)'],activeset=[5,5,5,4],jlower=3,jhigher=5,exc=0,ordering = 'User specified',write_csf = 'rcsfmr.inp'),
                Rangular(),
                Rwfnestimate(orbdict={'*' :os.path.join(core_dir,'rwfn_172Yb_core.out')}, fallback = 'Thomas-Fermi'),
                Rmcdhf(asfidx = [[1],[1],[1]],weightingmethod = 'Standard', orbs = ['*'], specorbs = ['*'],runs = 1000),
