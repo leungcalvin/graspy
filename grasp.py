@@ -39,7 +39,6 @@ def checkSmart(abspath):
         else:
             return False
 
-
 class Routine(object):
     def __init__(self,name,inputs=[],outputs=[],params=[]):
         self.name = name
@@ -102,7 +101,7 @@ class Rnucleus(Routine):
 coredict = {'None':0,'He':1,'Ne':2,'Ar':3,'Kr':4,'Xe':5}
 orderingdict = {'Default':'*','Reverse':'r','Symmetry':'s','User specified':'u'}
 class Rcsfgenerate(Routine):
-    def __init__(self,core,csflist,activeset,jlower,jhigher,exc,ordering='Default'):
+    def __init__(self,core,csflist,activeset,jlower,jhigher,exc,ordering='Default', write_csf = 'rcsf.out'):
         """
         Inputs:
         -------
@@ -122,6 +121,8 @@ class Rcsfgenerate(Routine):
         self.subparams.append(','.join([str(n)+l for n,l in zip(activeset,['s','p','d','f','g','h','i','l'])]))
         self.subparams.append(f'{jlower},{jhigher}')
         self.subparams.append(str(exc))
+        self.write_csf = write_csf
+
         #params.extend(subparams)
 
         #params.extend(csflist)
@@ -132,7 +133,7 @@ class Rcsfgenerate(Routine):
         #params.append('n') # terminate input
         super().__init__(name='rcsfgenerate',
                          inputs=[],
-                         outputs=['rcsf.out','rcsfgenerate.log'],
+                         outputs=[write_csf,'rcsfgenerate.log'],
                          params = self.header + self.subparams + ['n'])
     def __add__(self,other):
         # strip off the terminating 'n' line from self
@@ -144,18 +145,42 @@ class Rcsfgenerate(Routine):
         Routine.__init__(summed, name='rcsfgenerate',inputs = [], outputs = ['rcsf.out','rcsfgenerate.log'],params = self.header + self.subparams + ['y'] + other.subparams + ['n'])
         summed.header = self.header
         summed.subparams = self.subparams + ['y'] + other.subparams
+        name,ext=  os.path.splitext(self.write_csf)
+        othername,otherext=  os.path.splitext(other.write_csf)
+        assert ext == otherext, "Multireferences need to have the same file suffix."
+
+        summed.write_csf = f'{"_".join([name,othername]).{ext}'
         return summed
 
-    def execute(self,workdir,writeMR=False):
-        # we might need to copy to a multiref file at the end
+    def execute(self,workdir):
         super().execute(workdir)
-        if writeMR:
+        # if we need to write to a new file, e.g. a multiref
+        if self.write_csf != 'rcsf.out':
             copyfile(path.join(workdir,'rcsf.out'),
-                    path.join(workdir,'rcsfmr.inp'))
-        # then move the .out file to a .inp file for the other functions
+                 path.join(workdir,self.write_csf))
+
+        # no matter what, move the .out file to a .inp file for the other functions
         move(path.join(workdir,'rcsf.out'),
              path.join(workdir,'rcsf.inp'))
 
+list_to_designation = lambda orblist: ','.join([str(n)+l for n,l in zip(orblist,['s','p','d','f','g','h','i','l'])])
+
+class Rcsfsplit(Routine):
+    def __init__(self,calcname,nsplit,splitorbs):
+        if type(splitorbs[0]) is int: # if splits are specified by maximum principal quantum number value
+            splitnames = [str(n) for n in splitorbs]
+            splitorbs = [[n]*n for n in splitorbs]
+            print(splitnames,'splitnames')
+        else: # generate default splitnames
+            splitnames = [str(n) for n in range(nsplit)]
+        params = [calcname,str(nsplit)]
+        for splitname,splitorb in zip(splitnames,splitorbs):
+            params.append(list_to_designation(splitorb))
+            params.append(splitname)
+        super().__init__(name=f'rcsfsplit',
+                         inputs = [f'{calcname}.c'],
+                         outputs= [f'{calcname}{ext}.c' for ext in splitnames],
+                         params = params)
 
 
 hamiltoniandict = {'Dirac-Coulomb':1,'Dirac-Coulomb-Breit':2}
@@ -407,3 +432,4 @@ class Rtransition(Routine):
                     inputs = inputs,
                     outputs= outputs,
                     params = params)
+
