@@ -297,8 +297,9 @@ class Rangular(Routine):
                          params=params)
 
 methoddict = {'Thomas-Fermi':'2','Screened Hydrogenic':'3'}
+
 class Rwfnestimate(Routine):
-    def __init__(self,orbdict=None,fallback='Thomas-Fermi'):
+    def __init__(self,orbdict=None,fallback='Thomas-Fermi', grid = None):
         """
         Inputs:
         -------
@@ -308,7 +309,10 @@ class Rwfnestimate(Routine):
         implement non-default orbital generation parameters
         ------
         """
-        params = ['y']
+        if grid is None:
+            params = ['y']
+        else:
+            params = ['n','n','y','n','y',grid['RNT'],grid['H'],grid['HP'],grid['N']]
         addtl_files = []
         if orbdict == None:
         # no file input
