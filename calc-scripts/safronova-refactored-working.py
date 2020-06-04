@@ -1,7 +1,7 @@
 from grasp import *
 #This file implements the GRASP calculation documented here:
 
-def dhf_ion_6s(shellrefs = ['4f(14,*)6s(2,*)'])
+def dhf_ion_6s(shellrefs = ['4f(14,*)6s(2,*)']):
     dir_6s2 = '/home/calvin/graspy/safronova/est_6s2'
     clistordering = ['1s','2s','2p','3s','3p','3d','4s','4p','4d','5s','5p','4f','5d','6s','6p','5f','6d','7p','8s']
     initialize(workdir=dir_6s2,clist=clistordering)
