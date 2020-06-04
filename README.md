@@ -15,6 +15,8 @@ With a working GRASP 2018 installation and Python 3.6+, GRASPy should work right
 
 ```
 git clone https://github.com/leungcalvin/graspy/
+cd /path/to/graspy/
+pip install --user -e .
 ```
 
 ## How to Use
