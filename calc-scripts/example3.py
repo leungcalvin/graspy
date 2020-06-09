@@ -1,8 +1,8 @@
 from grasp import *
 #
-# This implements the GRASP 2018 calculation for 1s2 2s 2S and 1s2 2p 2P in Li I, as found in the GRASP 2018 manual, using the GRASPy interface.
+# This implements the GRASP 2018 calculation for 2s2 2p3 and 2p5 in Si VIII, as found in the GRASP 2018 manual, using the GRASPy interface.
 #
-testdir = './calc-outputs/example1'
+testdir = './calc-outputs/example3'
 initialize(workdir=testdir)
 
 # 1) Generate a multireference consisting of the 1s2 2s and 1s2 2p configurations
