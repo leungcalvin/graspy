@@ -1,0 +1,6 @@
+README.md
+setup.py
+graspy.egg-info/PKG-INFO
+graspy.egg-info/SOURCES.txt
+graspy.egg-info/dependency_links.txt
+graspy.egg-info/top_level.txt

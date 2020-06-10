@@ -20,7 +20,7 @@ pip install --user -e .
 ```
 
 ## How to Use
-As a pedagogical example, we have transcribed the first example , which calculates the 1s2 2s 2S and 1s2 2p 2P levels in Li I, into a Python script (`example1.py`). Running `python example1.py` will produce a directory `example1/` and output files inside.
+As a pedagogical example, we have transcribed the first example , which calculates the 1s2 2s 2S and 1s2 2p 2P levels in Li I, into a Python script (`example1.py`) which can be found in `graspy/graspytest`. Running `python example1.py` will produce a directory `example1/` and output files inside.
 
 ## Architecture
 Instead of executing a bunch of shell scripts in a particular folder as is documented in the GRASP 2018 manual,
