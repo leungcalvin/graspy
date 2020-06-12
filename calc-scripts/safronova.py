@@ -19,7 +19,7 @@ est6s2 =[
         Rnucleus(Z=70,A=172,neutralMass=171.936378,I=0,NDM=0,NQM=0),
         Rangular(),
         Rwfnestimate(orbdict=
-            {'*':'/home/calvin/Documents/vuletic/grasp2K_v1_1/manual/6s2/master.w'},
+            {'*':'../../../calc-scripts/cores/yb_6s2master.w'},
                      fallback='Thomas-Fermi'),
         Rmcdhf(indices_6s2,orbs=['6s'],specorbs=['*'],weightingmethod='Standard',runs=1000),
         Rwfnestimate(orbdict=
@@ -124,7 +124,7 @@ ci_run = [
 readout = [
         Rmixextract('safronova',useCI=True,tolerance = 0.001,sort=True),
         JJtoLSJ('safronova',useCI=True,unique=True),
-        Rlevels(calcname='safronova')
+        Rlevels(files='safronova')
         ]
 
 mr_6s2.execute(workdir = dir_6s) # define the multireference
