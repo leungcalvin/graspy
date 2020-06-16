@@ -164,7 +164,7 @@ ci_run_expanded = [
 readout = [
         Rmixextract('safronova',useCI=True,tolerance = 0.001,sort=True),
         JJtoLSJ('safronova',useCI=True,unique=True),
-        Rlevels(calcname='safronova')
+        Rlevels(files='safronova')
         ]
 
 #mr_6s2.execute(workdir = dir_6s2, writeMR=True) # define the multireference
