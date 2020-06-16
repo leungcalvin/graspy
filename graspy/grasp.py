@@ -474,6 +474,8 @@ class Rbiotransform(Routine):
         transform_all (bool): Transform all J symmetries? Default True.
         """
         params = ['y',booltoyesno(useCI),calcname_initial,calcname_final,booltoyesno(transform_all)] #TODO: implement non-default settings
+        if calcname_initial == calcname_final:
+            params.insert(4,'y')
         inputs = ['isodata',f'{calcname_initial}.c',f'{calcname_initial}.cm',f'{calcname_initial}.w',f'{calcname_final}.c',f'{calcname_final}.cm',f'{calcname_final}.w']
         outputs = [f'{calcname_initial}.cbm',f'{calcname_initial}.bw',f'{calcname_initial}.TB',f'{calcname_final}.cbm',f'{calcname_final}.bw',f'{calcname_final}.TB']
         super().__init__(name = 'rbiotransform',
