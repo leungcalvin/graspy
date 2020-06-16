@@ -108,7 +108,7 @@ ci_run = [
                                fallback='Thomas-Fermi'),
          Rmcdhf(indices_mr,orbs=['5f*,6d*,7s,7p*'],specorbs=[''],weightingmethod='Standard',runs=1000),
          Rsave('safronova'),
-         Rci(calcname='safronova',
+         Rci(files='safronova',
                  includetransverse=True,
                  modifyfreq=True,
                  scalefactor='1.d-6',
