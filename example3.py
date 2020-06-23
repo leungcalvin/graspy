@@ -38,6 +38,9 @@ CAS_b = Rcsfgenerate(core='None',ordering = 'Default',
 CAS_2S_exp = CAS_a + CAS_b
 CAS_2S_exp.execute(workdir = testdir)
 
+interact = Rcsfinteract('Dirac-Coulomb')
+interact.execute(workdir=testdir)
+
 CAS_2S = [
         Rangular(),
         Rwfnestimate(orbdict = {'*':'2s22p3_2p5_DF.w'},fallback = 'Screened Hydrogenic'),
@@ -47,7 +50,6 @@ CAS_2S = [
             runs = 100, weightingmethod = 'Standard'),
         Rsave('2s22p3_2p5_3')
         ]
-
 [cmd.execute(workdir = testdir) for cmd in CAS_2S]
 indices_try=[[1,2],[1,2,3,4],[1]]
 
