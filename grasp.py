@@ -358,6 +358,10 @@ class Rmcdhf(Routine):
                          inputs = ['isodata','rcsf.inp','rwfn.inp'],
                          outputs = ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log'],
                          params=params)
+        
+        def readout(list_of_strings):
+            index = self.printout.index("Iteration number")
+            print(index)
 
 class Rsave(Routine):
     def __init__(self,calcname):
