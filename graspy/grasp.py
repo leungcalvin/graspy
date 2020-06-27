@@ -5,6 +5,17 @@ import subprocess
 from shutil import copyfile,move
 import os
 from os import path
+import warnings
+
+def str_to_float(string):
+    parts = string.split('D')
+    if len(parts) == 1:
+        return float(parts[0])
+    if len(parts) == 2:
+        return float(parts[0]) * 10**(int(parts[1]))
+
+def float_to_str(number):
+    return "{:.9e}".format(number).replace('e','D')
 
 def initialize(workdir,clist=None):
     """
@@ -56,7 +67,8 @@ class Routine(object):
         self.workdir = workdir
         inputstr = ''.join(p+'\n' for p in self.params)
         for inp in self.inputs:
-            assert checkSmart(path.join(workdir,inp)), f'{self.name}: The input file {inp} is missing'
+            if not checkSmart(path.join(workdir,inp)):
+                warnings.warn(f'{self.name}: The input file {inp} is missing')
         process = subprocess.run([f'{self.name} | tee readout.temp'], # capture output to a temp file
                 input=inputstr,
                 capture_output=False,
@@ -65,8 +77,9 @@ class Routine(object):
                 cwd=workdir,
                 check=True,
                 encoding='utf8')
-        for outp in self.outputs:
-            assert path.exists(path.join(workdir,outp)),f'{self.name} failed to produce {path.join(workdir,outp)}. This was the command-line input to {self.name}:{self.params}'
+        missing_files = [outp for outp in self.outputs if not path.exists(path.join(workdir,outp))]
+        if len(missing_files) > 0:
+                warnings.warn(f'{self.name} failed to produce {missing_files} in the working directory. This was the command-line input to {self.name}:{self.params}')
         # remove temp file
         with open(os.path.join(workdir,'readout.temp')) as printout:
             self.printout = printout.read().splitlines()
@@ -135,7 +148,7 @@ class Rcsfgenerate(Routine):
         Inputs:
         -------
         core (str): 'None','He','Ne','Ar','Kr','Xe', or 'Rn'
-        csflist (list of str): electron configurations
+        csflist ((list) of str(s)): electron configurations
         activeset (list of ints): highest orbital numbers given as a list of quantum numbers in the order s,p,d,f,g,h,etc. So, [4,4,3] means the CSF expansion is truncated at 4s,4p,3d.
         jlower (int): minimum 2*J value of the atom
         jhigher (int): maximum 2*J value of the atom
@@ -145,6 +158,8 @@ class Rcsfgenerate(Routine):
         implement multiple different CSF lists with different jlower,jhigher
         ------
         """
+        if type(csflist) is str:
+            csflist = [csflist]
         self.header = [orderingdict[ordering],str(coredict[core])]
         self.subparams = csflist + ['*']
         self.subparams.append(','.join([str(n)+l for n,l in zip(activeset,['s','p','d','f','g','h','i','l'])]))
@@ -307,14 +322,12 @@ class Rwfnestimate(Routine):
         -------
         orbdict (dict): a dictionary whose keys are orbital designations (e.g. '5s,5p*' and whose values are relative filepaths from the working directory. If not supplied (not recommended because you will not be able to keep track of the calculation method), we will look for 'rwfn.out' in the working directory.
         fallback (str): Uses the 'Thomas-Fermi' or 'Screened Hydrogenic' method to generate all remaining orbitals
-        TODO:
-        implement non-default orbital generation parameters
         ------
         """
         if grid is None:
             params = ['y']
         else:
-            params = ['n','n','y','n','y',grid['RNT'],grid['H'],grid['HP'],grid['N']]
+            params = ['n','n','','y','n','y',float_to_str(grid['RNT']),float_to_str(grid['H']),str(grid['HP']),str(grid['N'])]
         addtl_files = []
         if orbdict == None:
         # no file input
@@ -330,32 +343,76 @@ class Rwfnestimate(Routine):
                 addtl_files.append(orbdict['*'])
 
         params.extend([methoddict[fallback],'*']) # after looking up everything possible, make sure all orbitals are estimated according to the fallback method
+        if grid is not None:
+            params.append('n')
 
         super().__init__(name='rwfnestimate',
                          inputs=['isodata','rcsf.inp']+addtl_files,
                          outputs=['rwfn.inp'],
                          params=params)
 
-weightingmethods = {'Equal':'1','Standard':'5','User [unsupported!]':'9'}
+WEIGHTINGS = {'Equal':'1','Standard':'5','User [unsupported!]':'9'}
+ORTHONORMALIZATIONS = {'Update': '1', 'Self consistency': '2'}
 class Rmcdhf(Routine):
-    def __init__(self,asfidx,orbs,specorbs,runs,weightingmethod):
+    def __init__(self,asfidx,orbs,specorbs,runs,weighting_method,grid = None, node_threshold = None, integration_method = None,accuracy = None,orthonormalization_order = None,subruns = None):
         """
         Inputs:
         -------
         asfidx (list of list of ints): list of list of GRASP atomic level serial numbers, block by block
         orbs (list of str): list of orbital designations which are to be varied, e.g. ['5s','5d-','6p*']
         runs (int): maximum number of SCF iterations
+        weighting_method ('Equal','Standard','User [not yet supported]'): how to weight different Zeeman levels(?) with a given configuration
+        integration_method (1,2,3,4): which non-default integration method to use.
+        accuracy: numerical convergence threshold
+
         TODO: implement non-default node counting threshold
-        implement three grid parameters
+
         ------
         """
         # runs is an integer denoting the maximum number of SCF iterations.
-        params = ['y']
+        if grid is None and integration is None and accuracy is None and orthonormalization_order is None: # keep default settings.
+            params = ['y']
+        else: # go deep into the weeds
+            params = ['n','n']
+            # change the grid
+            if grid is not None:
+                params.extend(['y','n','y',float_to_str(grid['RNT']),float_to_str(grid['H']),str(grid['HP']),str(grid['N'])])
+            else:
+                params.extend(['n'])
+            # change the accuracy
+            if accuracy is None:
+                params.extend(['n'])
+            else:
+                params.extend(['y',float_to_str(accuracy)])
         params.extend( ','.join(str(level) for level in levels) for levels in asfidx)
-        params.append(weightingmethods[weightingmethod])
+        params.append(WEIGHTINGS[weighting_method])
         params.append(','.join(orbs))
         params.append(','.join(specorbs))
         params.append(str(runs))
+        if orthonormalization_order is None and integration_method is None:
+            params.append('n')
+        else:
+            params.append('y')
+            if node_threshold is None:
+               params.append('n')
+            else:
+                params.extend(['y',float_to_str(node_threshold)])
+            if integration_method in [1,2,3,4]:
+                params.extend(['y'])
+                params.extend(['']*(integration_method - 1))
+                params.append('*')
+                params.extend(['']*(4 - integration_method))
+            if orthonormalization_order in ORTHONORMALIZATIONS.keys():
+                params.append(ORTHONORMALIZATIONS[orthonormalization_order])
+            # TODO: Implement nondefault options 1) allpositive?, 2) accel parameters for rwfn, 3) accel parameters for evecs, 4) nrefine = 5,
+            params.extend(['n','n','n','n'])
+            if subruns is int:
+                params.extend(['y',str(subruns)])
+            else:
+                params.extend(['n'])
+            # TODO: Currently assumes 4) schmidt orthonormalization = yes
+            params.extend(['n','1'])
+
         super().__init__(name='rmcdhf',
                          inputs = ['isodata','rcsf.inp','rwfn.inp'],
                          outputs = ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log'],
@@ -370,10 +427,24 @@ class Rsave(Routine):
         ------
         """
         super().__init__(name=f'rsave {calcname}',
-                         inputs = ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log'],
+                         inputs = [],# ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log']; rsave will succeed even if some of these are missing
                          outputs= [f'{calcname}.{ext}' for ext in ['c','m','w','sum','log']],
                          params = [])
 
+class Rasfsplit(Routine):
+    def __init__(self,calcname,something):
+        """
+        Inputs:
+        -------
+        calcname: name of the calculation without a file extension.
+        same (bool): whether csfs are generated from same set of orbitals. Default yes.
+
+        ------
+        """
+        super().__init__(name=f'rasfsplit',
+                         inputs = [f'{calcname}.c'],
+                         outputs= [],
+                         params = [booltoyesno(same)])
 
 class Rci(Routine):
     def __init__(self,calcname,includetransverse,modifyfreq,scalefactor,includevacpol,includenms,includesms,estselfenergy,largestn,asfidx):
