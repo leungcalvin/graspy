@@ -1,4 +1,4 @@
-from grasp import *
+from graspy.grasp import *
 #This file implements the GRASP calculation documented here:
 
 dir_6s2 = '/home/calvin/graspy/safronova/est_6s2'

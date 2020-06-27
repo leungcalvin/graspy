@@ -1,4 +1,4 @@
-from grasp import *
+from graspy.grasp import *
 #
 # This implements the GRASP 2018 calculation for 1s2 2s 2S and 1s2 2p 2P in Li I, as found in the GRASP 2018 manual, using the GRASPy interface.
 #
