@@ -370,7 +370,7 @@ class Rmcdhf(Routine):
         ------
         """
         # runs is an integer denoting the maximum number of SCF iterations.
-        if grid is None and integration is None and accuracy is None and orthonormalization_order is None: # keep default settings.
+        if grid is None and integration_method is None and accuracy is None and orthonormalization_order is None: # keep default settings.
             params = ['y']
         else: # go deep into the weeds
             params = ['n','n']
