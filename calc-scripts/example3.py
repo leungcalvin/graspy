@@ -20,7 +20,7 @@ MR_DHF =[
         Rnucleus(Z=14,A=28,neutralMass=27.9769271,I=1,NDM=1,NQM=1),
         Rangular(),
         Rwfnestimate(orbdict = None, fallback='Screened Hydrogenic'),
-        Rmcdhf([[1,2],[1,2,3,4],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weightingmethod = 'Standard'),
+        Rmcdhf([[1,2],[1,2,3,4],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'),
         Rsave('2s22p3_2p5_DF')
         ]
 [cmd.execute(workdir = testdir) for cmd in MR_DHF]
@@ -47,7 +47,7 @@ CAS_2S = [
         Rmcdhf([[1,2],[1,2,3,4],[1]],
             orbs = ['3*'],
             specorbs = [' '],
-            runs = 100, weightingmethod = 'Standard'),
+            runs = 100, weighting_method = 'Standard'),
         Rsave('2s22p3_2p5_3')
         ]
 [cmd.execute(workdir = testdir) for cmd in CAS_2S]
