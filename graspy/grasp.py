@@ -354,7 +354,7 @@ class Rwfnestimate(Routine):
 WEIGHTINGS = {'Equal':'1','Standard':'5','User [unsupported!]':'9'}
 ORTHONORMALIZATIONS = {'Update': '1', 'Self consistency': '2'}
 class Rmcdhf(Routine):
-    def __init__(self,asfidx,orbs,specorbs,runs,weighting_method,grid = None, node_threshold = None, integration_method = None,accuracy = None,orthonormalization_order = None,subruns = None):
+    def __init__(self,asfidx,orbs,specorbs,runs,weighting_method,grid = None, node_threshold = None, integration_method = None,accuracy = None,orthonormalization_order = 'Update',subruns = None):
         """
         Inputs:
         -------
@@ -370,7 +370,7 @@ class Rmcdhf(Routine):
         ------
         """
         # runs is an integer denoting the maximum number of SCF iterations.
-        if grid is None and integration_method is None and accuracy is None and orthonormalization_order is None: # keep default settings.
+        if grid is None and integration_method is None and accuracy is None and orthonormalization_order is not 'Update': # keep default settings.
             params = ['y']
         else: # go deep into the weeds
             params = ['n','n']
@@ -389,7 +389,7 @@ class Rmcdhf(Routine):
         params.append(','.join(orbs))
         params.append(','.join(specorbs))
         params.append(str(runs))
-        if orthonormalization_order is None and integration_method is None:
+        if integration_method is None:
             params.append('n')
         else:
             params.append('y')
@@ -402,8 +402,8 @@ class Rmcdhf(Routine):
                 params.extend(['']*(integration_method - 1))
                 params.append('*')
                 params.extend(['']*(4 - integration_method))
-            if orthonormalization_order in ORTHONORMALIZATIONS.keys():
-                params.append(ORTHONORMALIZATIONS[orthonormalization_order])
+            else:
+                params.extend(['n'])
             # TODO: Implement nondefault options 1) allpositive?, 2) accel parameters for rwfn, 3) accel parameters for evecs, 4) nrefine = 5,
             params.extend(['n','n','n','n'])
             if subruns is int:
@@ -411,7 +411,9 @@ class Rmcdhf(Routine):
             else:
                 params.extend(['n'])
             # TODO: Currently assumes 4) schmidt orthonormalization = yes
-            params.extend(['n','1'])
+            params.extend(['n'])
+        if orthonormalization_order in ORTHONORMALIZATIONS.keys():
+            params.append(ORTHONORMALIZATIONS[orthonormalization_order])
 
         super().__init__(name='rmcdhf',
                          inputs = ['isodata','rcsf.inp','rwfn.inp'],
