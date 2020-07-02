@@ -48,7 +48,7 @@ CAS_2S = [
         ]
 printouts = [cmd.execute(workdir = testdir) for cmd in MR_DHF]
 df = printouts[3]
-print(df.keys('Subshell'))
+print(df['Energy'])
 
 # 5) Perform CI on the 2S expansion.
 CI_2S = [
