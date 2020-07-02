@@ -422,53 +422,75 @@ class Rmcdhf(Routine):
         
     def readout(self):
         last_index = self.printout.index(" RMCDHF: Execution complete.")
+        #index of last element in function readout
         # print(last_index)
-        x = 0
-        list_of_indices = []
-        list_of_end_indices = []
         last_candidates_index = []
+        #empty list where the index number of potential ending of the last table is stored
         start_candidates_index = []
+        #empty list where the index number of potential starting of the last table is stored
 
         start_of_table = " Iteration number   "
+        #every time 'Iteration number' is found, a table follows
         start_candidates = [line.find(start_of_table) for line in self.printout]
+        #searches for 'Iteration number' in the list of strings made by the readout function
+        #creates a list, when start_of_table is found, 0 is returned, otherwise -1 is returned for every index in list of strings
         # print(start_candidates)
         j = 0
+        #starting index
         for j in range(last_index):
+            #for every index in the range of the last_index number
             if start_candidates[j] == 0:
+                #if the element in the list with index number j has the value 0
                 start_index = j
+                #stores the index number where 0 is found
                 start_candidates_index.append(start_index)
+                #appends that number to in list of start_candidates_index
             else:
                 continue
             j += 1
         # print(start_candidates_index)
         table_index = int(start_candidates_index[-1]) + 7
+        #the last element of list start_candidates_index is where the last iteration is found, and 7 indexes after that string is where the table starts
         # print(table_index)
 
         end_of_table = " Average energy = "
+         #every time 'Average energy' is found, the table has ended before that string 
         end_candidates = [line.find(end_of_table) for line in self.printout]
+        #searches for 'Average energy' in the list of strings made by the readout function
+        #creates a list, when end_of_table is found, 0 is returned, otherwise -1 is returned for every index in list of strings
         # print(end_candidates)
         i = 0
+        #starting index
         for i in range(last_index):
+            #for every index in the range of the last_index number
             if end_candidates[i] == 0:
+                #if the element in the list with index number j has the value 0
                 end_index = i
+                #stores the index number where 0 is found
                 last_candidates_index.append(end_index)
+                #appends that number to in list of last_candidates_index
             else:
                 continue
             i += 1
         # print(last_candidates_index)
         end_table = int(last_candidates_index[-3]) - 1
+        #the third to last element of list last_candidates_index is where the last, first average energy is found, and 1 index before that string is where the table ends
         # print(end_table)
         table = self.printout[table_index + 2:end_table]
+        #prints only the contents of the table, not the header
         # print(table)
         # print()
         table = filter(None, table)
+        #removes the line where None is returned
         table_list = [line.split() for line in table]
+        #splits the list of strings of the table into seperate lines
         # print(table_list)
         for line in table_list:
             if len(line) < 11:
                 line.extend((11-len(line))*[''])
                 
         df = pd.DataFrame(table_list, columns= ['Subshell', 'Energy','Method','P0','Self-consistency','Norm-1','Damping factor','JP','MTP', "INV", 'NNP'], dtype=float)
+        #returns the table, and assigns each column with a header
         # df = df.to_string(index=False, header=False)
         return df
 
