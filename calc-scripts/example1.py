@@ -46,7 +46,9 @@ CAS_2S = [
             runs = 100, weightingmethod = 'Standard'),
         Rsave('2s_3')
         ]
-[cmd.execute(workdir = testdir) for cmd in CAS_2S]
+printouts = [cmd.execute(workdir = testdir) for cmd in MR_DHF]
+df = printouts[3]
+print(df.keys('Subshell'))
 
 # 5) Perform CI on the 2S expansion.
 CI_2S = [
