@@ -419,6 +419,58 @@ class Rmcdhf(Routine):
                          inputs = ['isodata','rcsf.inp','rwfn.inp'],
                          outputs = ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log'],
                          params=params)
+        
+    def readout(self):
+        last_index = self.printout.index(" RMCDHF: Execution complete.")
+        # print(last_index)
+        x = 0
+        list_of_indices = []
+        list_of_end_indices = []
+        last_candidates_index = []
+        start_candidates_index = []
+
+        start_of_table = " Iteration number   "
+        start_candidates = [line.find(start_of_table) for line in self.printout]
+        # print(start_candidates)
+        j = 0
+        for j in range(last_index):
+            if start_candidates[j] == 0:
+                start_index = j
+                start_candidates_index.append(start_index)
+            else:
+                continue
+            j += 1
+        # print(start_candidates_index)
+        table_index = int(start_candidates_index[-1]) + 7
+        # print(table_index)
+
+        end_of_table = " Average energy = "
+        end_candidates = [line.find(end_of_table) for line in self.printout]
+        # print(end_candidates)
+        i = 0
+        for i in range(last_index):
+            if end_candidates[i] == 0:
+                end_index = i
+                last_candidates_index.append(end_index)
+            else:
+                continue
+            i += 1
+        # print(last_candidates_index)
+        end_table = int(last_candidates_index[-3]) - 1
+        # print(end_table)
+        table = self.printout[table_index + 2:end_table]
+        # print(table)
+        # print()
+        table = filter(None, table)
+        table_list = [line.split() for line in table]
+        # print(table_list)
+        for line in table_list:
+            if len(line) < 11:
+                line.extend((11-len(line))*[''])
+                
+        df = pd.DataFrame(table_list, columns= ['Subshell', 'Energy','Method','P0','Self-consistency','Norm-1','Damping factor','JP','MTP', "INV", 'NNP'], dtype=float)
+        # df = df.to_string(index=False, header=False)
+        return df
 
 class Rsave(Routine):
     def __init__(self,calcname):
