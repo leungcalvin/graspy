@@ -478,15 +478,16 @@ class Rci(Routine):
 
 
 
-class Rmixextract(Routine):
-    def __init__(self,calcname,useCI,tolerance,sort):
-        params = [calcname]
-        params.append(booltoyesno(useCI))
+class Rmixextract(CSFRoutine):
+    def __init__(self,calc_name,use_ci,tolerance,sort,write_csf):
+        self.write_csf = write_csf
+        params = [calc_name]
+        params.append(booltoyesno(use_ci))
         params.append(str(tolerance))
         params.append(booltoyesno(sort))
-        print(f'{calcname}.cm')
+        print(f'{calc_name}.cm')
         super().__init__(name = 'rmixextract',
-                    inputs = [f'{calcname}.cm'],
+                    inputs = [f'{calc_name}.cm'],
                     outputs= ['rcsf.out'], #really?? shouldn't grasp name it something else
                     params = params)
 
