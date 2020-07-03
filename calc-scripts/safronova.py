@@ -130,9 +130,9 @@ def full_calculation(calc_dir,active_set,exc,n_open):
         return exp
 
 
-    indices_mr = [[1],[1],[1],[1,2],[1],[1,2],[1],[1,2],[1],[1],[1],[1],[1],[1],[1]]
     def run_ci(calc_dir,active_set,exc,n_open):
         initialize(workdir=calc_dir,clist=clistordering)
+        indices_mr = [[1],[1],[1],[1,2],[1],[1,2],[1],[1,2],[1],[1],[1],[1],[1],[1],[1]]
         gen_multireference().execute(calc_dir)
         cmds = [
              Rnucleus(Z=70,A=172,neutralMass=171.936378,I=0,NDM=0,NQM=0),
