@@ -113,6 +113,8 @@ def full_calculation(calc_dir,active_set,exc,n_open):
 
     def ci_expansion_open_core(active_set,exc,write_csf,n_open = 6):
         # Only includes CV and VV!
+        if n_open == 4:
+            prefix = '4d(10,9)5s(2,1)5p(6,5)'
         if n_open == 5:
             prefix = '4d(10,i)5s(2,1)5p(6,5)'
         if n_open == 6:
