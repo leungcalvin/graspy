@@ -4,3 +4,4 @@ testdir
 *.w
 *.log
 excitationdata
+*.egg-info
