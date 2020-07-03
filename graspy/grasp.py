@@ -28,6 +28,7 @@ def initialize(workdir,clist=None):
     """
     if not os.path.exists(workdir):
         os.makedirs(workdir)
+        print(f'Made path to: {workdir}')
     if clist is not None:
         with open(os.path.join(workdir,'clist.ref'),'w+') as clistfile:
             # clistfile.write([str(''.join(string+'\n')) for string in clist])
@@ -143,13 +144,13 @@ coredict = {'None':0,'He':1,'Ne':2,'Ar':3,'Kr':4,'Xe':5}
 orderingdict = {'Default':'*','Reverse':'r','Symmetry':'s','User specified':'u'}
 
 class Rcsfgenerate(Routine):
-    def __init__(self,core,csflist,activeset,jlower,jhigher,exc,ordering='Default', write_csf = 'rcsf.out'):
+    def __init__(self,core,csflist,active_set,jlower,jhigher,exc,ordering='Default', write_csf = 'rcsf.out'):
         """
         Inputs:
         -------
         core (str): 'None','He','Ne','Ar','Kr','Xe', or 'Rn'
         csflist ((list) of str(s)): electron configurations
-        activeset (list of ints): highest orbital numbers given as a list of quantum numbers in the order s,p,d,f,g,h,etc. So, [4,4,3] means the CSF expansion is truncated at 4s,4p,3d.
+        active_set (list of ints): highest orbital numbers given as a list of quantum numbers in the order s,p,d,f,g,h,etc. So, [4,4,3] means the CSF expansion is truncated at 4s,4p,3d.
         jlower (int): minimum 2*J value of the atom
         jhigher (int): maximum 2*J value of the atom
         exc (int): number of excitations from each config in multireference
@@ -162,7 +163,7 @@ class Rcsfgenerate(Routine):
             csflist = [csflist]
         self.header = [orderingdict[ordering],str(coredict[core])]
         self.subparams = csflist + ['*']
-        self.subparams.append(','.join([str(n)+l for n,l in zip(activeset,['s','p','d','f','g','h','i','l'])]))
+        self.subparams.append(','.join([str(n)+l for n,l in zip(active_set,['s','p','d','f','g','h','i','l'])]))
         self.subparams.append(f'{jlower},{jhigher}')
         self.subparams.append(str(exc))
         self.write_csf = write_csf
@@ -171,7 +172,7 @@ class Rcsfgenerate(Routine):
 
         #params.extend(csflist)
         #params.append('*') # end the CSF list
-        #params.append(','.join([str(n)+l for n,l in zip(activeset,['s','p','d','f','g','h','i','l'])]))
+        #params.append(','.join([str(n)+l for n,l in zip(active_set,['s','p','d','f','g','h','i','l'])]))
         #params.append(f'{jlower},{jhigher}')
         #params.append(str(exc))
         #params.append('n') # terminate input
@@ -449,30 +450,30 @@ class Rasfsplit(Routine):
                          params = [booltoyesno(same)])
 
 class Rci(Routine):
-    def __init__(self,calcname,includetransverse,modifyfreq,scalefactor,includevacpol,includenms,includesms,estselfenergy,largestn,asfidx):
+    def __init__(self,calc_name,include_transverse,modify_freq,scale_factor,include_vacpol,include_nms,include_sms,est_self_energy,largest_n,asfidx):
         """
         Inputs:
         -------
-        calcname (str): provide the name of a RMCDHF calculation to use as the basis for an RCI calculation.
-        includetransverse (bool)
-        modifyfreq (bool)
-        scalefactor (str for now): '1.d-6' by default
-        includevacpol,includenms,includesms,estselfenergy: (bool)
-        largestn (int <= 8)
+        calc_name (str): provide the name of a RMCDHF calculation to use as the basis for an RCI calculation.
+        include_transverse (bool)
+        modify_freq (bool)
+        scale_factor (str for now): '1.d-6' by default
+        include_vacpol,include_nms,include_sms,est_self_energy: (bool)
+        largest_n (int <= 8)
         asfidx (list of list of ints): see rmcdhf
         ------
         """
-        params = ['y',calcname]
-        params.extend([booltoyesno(param) for param in [includetransverse,modifyfreq]])
-        if includetransverse:
-            params.append(str(scalefactor))
-        params.extend([booltoyesno(param) for param in [includevacpol,includenms,includesms,estselfenergy]])
-        if estselfenergy:
-            params.append(str(largestn))
+        params = ['y',calc_name]
+        params.extend([booltoyesno(param) for param in [include_transverse,modify_freq]])
+        if include_transverse:
+            params.append(str(scale_factor))
+        params.extend([booltoyesno(param) for param in [include_vacpol,include_nms,include_sms,est_self_energy]])
+        if est_self_energy:
+            params.append(str(largest_n))
         params.extend( ','.join(str(level) for level in levels) for levels in asfidx)
         super().__init__(name = 'rci',
-                         inputs = [f'{calcname}.c',f'{calcname}.w'],
-                         outputs=[f'{calcname}.cm',f'{calcname}.csum',f'{calcname}.clog','rci.res'],
+                         inputs = [f'{calc_name}.c',f'{calc_name}.w'],
+                         outputs=[f'{calc_name}.cm',f'{calc_name}.csum',f'{calc_name}.clog','rci.res'],
                          params = params)
 
 
@@ -490,10 +491,10 @@ class Rmixextract(Routine):
                     params = params)
 
 class JJtoLSJ(Routine):
-    def __init__(self,calcname,useCI,unique):
-        params = [calcname,booltoyesno(useCI),booltoyesno(unique),'y'] #TODO: implement non-default settings
-        inputs = [f'{calcname}.c',f'{calcname}.cm']
-        outputs= [f'{calcname}.lsj.lbl'] # and maybe some others
+    def __init__(self,calc_name,useCI,unique):
+        params = [calc_name,booltoyesno(useCI),booltoyesno(unique),'y'] #TODO: implement non-default settings
+        inputs = [f'{calc_name}.c',f'{calc_name}.cm']
+        outputs= [f'{calc_name}.lsj.lbl'] # and maybe some others
         super().__init__(name = 'jj2lsj',
                     inputs = inputs,
                     outputs= outputs,
