@@ -425,6 +425,8 @@ class Rmcdhf(Routine):
         #index of last element in function readout
         # print(last_index)
         last_candidates_index = []
+        #empty list where the index number of where 'Average Energy' is found 
+        last_candidates_index_1 = []
         #empty list where the index number of potential ending of the last table is stored
         start_candidates_index = []
         #empty list where the index number of potential starting of the last table is stored
