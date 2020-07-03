@@ -464,18 +464,33 @@ class Rmcdhf(Routine):
         for i in range(last_index):
             #for every index in the range of the last_index number
             if end_candidates[i] == 0:
-                #if the element in the list with index number j has the value 0
+                #if the element in the list with index number i has the value 0
                 end_index = i
                 #stores the index number where 0 is found
                 last_candidates_index.append(end_index)
-                #appends that number to in list of last_candidates_index
+                #appends that number into the list last_candidates_index
             else:
                 continue
             i += 1
         # print(last_candidates_index)
-        end_table = int(last_candidates_index[-3]) - 1
-        #the third to last element of list last_candidates_index is where the last, first average energy is found, and 1 index before that string is where the table ends
+        last_candidate = int(last_candidates_index[-1])
+        #the last index where 'Average energy' is found
+        for i in range(last_candidate):
+            #for every index in the range of the last_candidate number
+            if end_candidates[i] == -1:
+                #if the element in the list with index number i has the value 0
+                end_index_1 = i
+                #stores the index number where -1 is found 
+                last_candidates_index_1.append(end_index_1)
+                #appends the number into the list last_candidates_index_1
+            else: 
+                continue
+            i += 1
+        # print(last_candidates_index_1)
+        end_table = int(last_candidates_index_1[-1]) 
+        #the last index is where the table ends, as the index number is less than index number of where 'Average energy' is last found
         # print(end_table)
+        
         table = self.printout[table_index + 2:end_table]
         #prints only the contents of the table, not the header
         # print(table)
