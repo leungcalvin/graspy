@@ -1,0 +1,6 @@
+__pycache__
+testdir
+*.out
+*.w
+*.log
+excitationdata
