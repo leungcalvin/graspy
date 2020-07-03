@@ -54,21 +54,51 @@ def full_calculation(calc_dir,active_set,exc,n_open):
 #
 # Estimate 5d orbitals using 4f13 6s2 5d configurations
 #
-    initialize(workdir=dir_5d,clist=clistordering)
-    mr_5d = Rcsfgenerate('Xe',
-                ['4f(13,*)5d(1,*)6s(2,*)'],
-                active_set=[6,5,5,4],
-                jlower=0,jhigher=14,exc=0,write_csf = 'rcsfmr.inp')
-    indices_5d = [[1],[1,2,3],[1,2,3,4],[1,2,3,4],[1,2,3,4],[1,2,3],[1]]
-    est5d =[
-            Rnucleus(Z=70,A=172,neutralMass=171.936378,I=0,NDM=0,NQM=0),
-            Rangular(),
-            Rwfnestimate(orbdict=
-                {'*':os.path.join(dir_6s,'rwfn.out')},
-                         fallback='Thomas-Fermi'),
-            Rmcdhf(indices_5d,orbs=['5d*'],specorbs=['*'],weighting_method='Standard',runs=1000)
-            ]
+    def estimate_5d():
+        mr_5d = Rcsfgenerate('Xe',
+                    ['4f(13,*)5d(1,*)6s(2,*)'],
+                    active_set=[6,5,5,4],
+                    jlower=0,jhigher=14,exc=0,write_csf = 'rcsfmr.inp')
+        indices_5d = [[1],[1,2,3],[1,2,3,4],[1,2,3,4],[1,2,3,4],[1,2,3],[1]]
+        est5d =[
+                mr_5d,
+                Rnucleus(Z=70,A=172,neutralMass=171.936378,I=0,NDM=0,NQM=0),
+                Rangular(),
+                Rwfnestimate(orbdict=
+                    {'*':os.path.join(dir_6s,'rwfn.out')},
+                             fallback='Thomas-Fermi'),
+                Rmcdhf(indices_5d,orbs=['5d*'],specorbs=['*'],weighting_method='Standard',runs=1000)
+                ]
+        return est5d
 
+    def estimate_5d_closed():
+        mr_5d = Rcsfgenerate('Xe',
+                    ['4f(14,*)5d(1,*)6s(1,*)'],
+                    active_set=[6,5,5,4],
+                    jlower=2,jhigher=6,exc=0,write_csf = 'rcsfmr.inp')
+        indices_5d = [[1],[1,2],[1]] # just the singlet and triplet
+        est5d =[
+                mr_5d,
+                Rnucleus(Z=70,A=172,neutralMass=171.936378,I=0,NDM=0,NQM=0),
+                Rangular(),
+                Rwfnestimate(orbdict=
+                    {'*':os.path.join(dir_6s,'rwfn.out')},
+                             fallback='Thomas-Fermi'),
+                Rmcdhf(indices_5d,orbs=['5d*'],specorbs=['*'],weighting_method='Standard',runs=1000)
+                ]
+        return est5d
+   ##################
+   #
+   #
+   # DHF Calculations
+   #
+   ##################
+    mr_6s2.execute(workdir = dir_6s) # define the multireference
+    [cmd.execute(workdir = dir_6s) for cmd in est6s2]
+    mr_6p.execute(workdir = dir_6p) # define the multireference
+    [cmd.execute(workdir = dir_6p) for cmd in est6p]
+    initialize(workdir=dir_5d,clist=clistordering)
+    [cmd.execute(workdir = dir_5d) for cmd in estimate_5d_closed()]
 
     def gen_multireference():
         zeros_6s2 = Rcsfgenerate('Kr',['4d(10,i)5s(2,i)5p(6,i)4f(14,*)6s(2,*)'],active_set=[6,6,6,5],jlower=0,jhigher=2,exc=0,write_csf='rcsfmr.inp')
@@ -97,12 +127,6 @@ def full_calculation(calc_dir,active_set,exc,n_open):
         exp = exp_even + exp_odd
         return exp
 
-    mr_6s2.execute(workdir = dir_6s) # define the multireference
-    [cmd.execute(workdir = dir_6s) for cmd in est6s2]
-    mr_5d.execute(workdir = dir_5d) # define the multireference
-    [cmd.execute(workdir = dir_5d) for cmd in est5d]
-    mr_6p.execute(workdir = dir_6p) # define the multireference
-    [cmd.execute(workdir = dir_6p) for cmd in est6p]
 
     indices_mr = [[1],[1],[1],[1,2],[1],[1,2],[1],[1,2],[1],[1],[1],[1],[1],[1],[1]]
     def run_ci(calc_dir,active_set,exc,n_open):
@@ -134,6 +158,7 @@ def full_calculation(calc_dir,active_set,exc,n_open):
         return [cmd.execute(workdir=calc_dir) for cmd in cmds]
 
     run_ci(dir_ci,active_set,exc,n_open)
+    Rmixextract(calc_name = 'safronova',use_ci = True,tolerance = 0.05, sort = True, write_csf = 'rmix_5e-2.out').execute(dir_ci)
     #  run_ci(calc_dir = dir_cis[0],active_set = [7,7,6,5], exc = 1,n_open = 6)
     #  run_ci(calc_dir = dir_cis[1],active_set = [8,8,7,6], exc = 1,n_open = 6)
     #  run_ci(calc_dir = dir_cis[2],active_set = [9,9,8,7], exc = 1,n_open = 6)
@@ -151,7 +176,7 @@ if __name__ == '__main__':
     parser.add_argument('--dir',help='Root directory to place calculation results', default = '/home/calvin/graspy/calc-outputs/safronova')
     #parser.add_argument('--maxn',help='Highest n of correlation orbital basis set',default=7,type=int)
     parser.add_argument('--maxn',help='Highest n of correlation orbital basis set', nargs='+', required=True,type= int)
-    parser.add_argument('--coren',help='Lowest n of open core configurations',default = 4,type=int)
+    parser.add_argument('--coren',help='Lowest n of open core configurations',default = 6,type=int)
     parser.add_argument('--excitations',help='Number of excitations',default = 1,type=int)
     cmdargs = parser.parse_args()
     full_calculation(cmdargs.dir,active_set = cmdargs.maxn,exc = cmdargs.excitations,n_open = cmdargs.coren)
