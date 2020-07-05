@@ -28,7 +28,7 @@ def initialize(workdir,clist=None):
     """
     if not os.path.exists(workdir):
         os.makedirs(workdir)
-        print(f'Made path to: {workdir}')
+        #print(f'Made path to: {workdir}')
     if clist is not None:
         with open(os.path.join(workdir,'clist.ref'),'w+') as clistfile:
             # clistfile.write([str(''.join(string+'\n')) for string in clist])
@@ -47,7 +47,7 @@ def checkSmart(abspath):
     else:
         root,ext=path.splitext(abspath)
         if path.exists(root+'.out'):
-            print(f'Copying {root}.out -> {root}.inp')
+            #print(f'Copying {root}.out -> {root}.inp')
             os.rename(root+'.out',root+'.inp')
             return True
         else:
@@ -58,9 +58,9 @@ class Routine(object):
         self.name = name
         self.inputs=inputs
         self.outputs=outputs
-        print(f'{name}: {params}')
-        print(f'{name}: {inputs}')
-        print(f'{name}: {outputs}')
+        #print(f'{name}: {params}')
+        #print(f'{name}: {inputs}')
+        #print(f'{name}: {outputs}')
         self.params=params
         self.hash=hash(self)
 
@@ -91,13 +91,13 @@ class Routine(object):
     def readout(self):
         # Reads off the raw output of the shell command by default, meant to be overloaded
         # Overload this with a function that takes in self.printout and returns something useful to the computation
-        print('superclass method called')
+        #print('superclass method called')
         return self.printout
 
 class CSFRoutine(Routine):
     """ A CSFRoutine is any GRASP routine that produces a CSF file as rcsf.out. Since other routines need to read from places like rcsf.inp and rcsfmr.inp, we'll overload the execute() routine to include some file management. We need to make sure that we have a self.write_csf attribute."""
     def execute(self,workdir):
-        print('Calling CSFRoutine execute with directory mgmt!')
+        #print('Calling CSFRoutine execute with directory mgmt!')
         assert hasattr(self,'write_csf'),f'{self.name} has no csf file defined!'
         super().execute(workdir)
         # if we want to keep a log file somewhere, move it over.
@@ -218,7 +218,7 @@ class Rcsfsplit(Routine):
         if type(splitorbs[0]) is int: # if splits are specified by maximum principal quantum number value
             splitnames = [str(n) for n in splitorbs]
             splitorbs = [[n]*n for n in splitorbs]
-            print(splitnames,'splitnames')
+            #print(splitnames,'splitnames')
         else: # generate default splitnames
             splitnames = [str(n) for n in range(nsplit)]
         params = [calcname,str(nsplit)]
@@ -293,7 +293,7 @@ class Rmixaccumulate(Routine):
     def readout(self):
         idx = self.printout.index('         block        ncf') + 1 # start reading iccut on the next line
         iccuttable = pd.DataFrame([line.split() for line in self.printout[idx:]],dtype=float)
-        print('called subclass method')
+        #print('called subclass method')
         return [int(val) for val in iccuttable.values[:,1]] #a value for each block
 
 class Rangular(Routine):
@@ -485,7 +485,7 @@ class Rmixextract(CSFRoutine):
         params.append(booltoyesno(use_ci))
         params.append(str(tolerance))
         params.append(booltoyesno(sort))
-        print(f'{calc_name}.cm')
+        #print(f'{calc_name}.cm')
         super().__init__(name = 'rmixextract',
                     inputs = [f'{calc_name}.cm'],
                     outputs= ['rcsf.out'], #really?? shouldn't grasp name it something else
@@ -517,7 +517,7 @@ class Rlevels(Routine):
         # reads off the energy levels into a table
         tableheader,start,end = np.where([line[0:2] == '--' for line in self.printout])[0]
         tableList = [line.split() for line in self.printout[start+1:end]]
-        print(tableList)
+        #print(tableList)
         for line in tableList:
             if len(line) < 8:
                 line.extend((8-len(line))*[''])
