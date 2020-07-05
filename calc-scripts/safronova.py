@@ -6,7 +6,7 @@ def full_calculation(calc_dir,active_set,exc,n_open):
     dir_6s = os.path.join(calc_dir,'est_6s2')
     dir_6p = os.path.join(calc_dir,'est_6p')
     dir_5d = os.path.join(calc_dir,'est_5d')
-    dir_ci = os.path.join(calc_dir,f'ci_{n_open}_{active_set[0]}{active_set[1]}{active_set[2]}{active_set[3]}_x{exc}')
+    dir_ci = os.path.join(calc_dir,f'ci_{n_open}_{"".join(map(str,active_set))}_x{exc}')
 
     clistordering = ['1s','2s','2p','3s','3p','3d','4s','4p','4d','5s','5p','4f','5d','6s','6p','5f','6d','7p','8s']
     initialize(workdir=dir_6s,clist=clistordering)
@@ -86,13 +86,13 @@ def full_calculation(calc_dir,active_set,exc,n_open):
    ##################
     mr_6s2.execute(workdir = dir_6s) # define the multireference
     [cmd.execute(workdir = dir_6s) for cmd in est6s2]
-    input('6s OK?')
+    # input('6s OK?')
     mr_6p.execute(workdir = dir_6p) # define the multireference
     [cmd.execute(workdir = dir_6p) for cmd in est6p]
-    input('6p OK?')
+    # input('6p OK?')
     initialize(workdir=dir_5d,clist=clistordering)
     [cmd.execute(workdir = dir_5d) for cmd in estimate_5d('odd')]
-    input('5d OK?')
+    # input('5d OK?')
 
    ##################
    #
@@ -152,7 +152,7 @@ def full_calculation(calc_dir,active_set,exc,n_open):
              ]
         return [cmd.execute(workdir=calc_dir) for cmd in cmds]
     gen_expansion(dir_ci,active_set,exc,n_open)
-    input('Expansion OK?')
+    # input('Expansion OK?')
     Rci(calc_name='safronova',
          include_transverse=True,
          modify_freq=True,
