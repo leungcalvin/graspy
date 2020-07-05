@@ -506,7 +506,7 @@ class Rlevels(Routine):
         if type(files) is str:
             files = [files]
 
-        params = list(files).append('') #newline to terminate calcname input
+        params = files + [''] #newline to terminate calcname input
         # TODO: implement multiple calculation results
         super().__init__(name = 'rlevels',
                     inputs = list(files),
@@ -522,6 +522,8 @@ class Rlevels(Routine):
             if len(line) < 8:
                 line.extend((8-len(line))*[''])
         df = pd.DataFrame(tableList,columns= ['Number','Position','J','Parity','Energy Total','Levels','Splitting','Configuration'],dtype=float)
+        for key in ['Number','Position','J','Energy Total', 'Levels','Splitting']:
+            df[key] = pd.to_numeric(df[key])
         return df
 
 class Rhfs(Routine):
