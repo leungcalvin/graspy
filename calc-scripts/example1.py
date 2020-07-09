@@ -26,9 +26,12 @@ MR_DHF =[
         Rmcdhf([[1],[1],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weightingmethod = 'Standard'),
         Rsave('2s_2p_DF')
         ]
-printouts_1 = [cmd.execute(workdir = testdir) for cmd in MR_DHF]
-df = printouts_1[3]
-print(df['Energy'])
+printouts = [cmd.execute(workdir = testdir) for cmd in MR_DHF]
+printouts = printouts[3]
+# print(printouts)
+# print()
+df = printouts[0:]
+print(df)
 
 # 3) Generate a CAS expansion from the 2S configuration.
 CAS_2S_exp = Rcsfgenerate(core='None',ordering = 'Default',
@@ -48,9 +51,9 @@ CAS_2S = [
             runs = 100, weightingmethod = 'Standard'),
         Rsave('2s_3')
         ]
-printouts_2 = [cmd.execute(workdir = testdir) for cmd in CAS_2S]
-df = printouts_2[2]
-print(df['Energy'])
+# printouts_2 = [cmd.execute(workdir = testdir) for cmd in CAS_2S]
+# df = printouts_2[2]
+# print(df['Energy'])
 
 # 5) Perform CI on the 2S expansion.
 CI_2S = [
