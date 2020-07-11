@@ -431,10 +431,10 @@ class Rmcdhf(Routine):
         start_candidates_index = []
         #empty list where the index number of potential starting of the last table is stored
 
-        start_of_table = " Iteration number   "
-        #every time 'Iteration number' is found, a table follows
+        start_of_table = "Subshell    Energy    Method   P0    consistency  Norm-1  factor  JP MTP INV NNP"
+        #every time 'Subshell ...' (the headers of the table) is found, a table follows 
         start_candidates = [line.find(start_of_table) for line in self.printout]
-        #searches for 'Iteration number' in the list of strings made by the readout function
+        #searches for 'Subshell ...' in the list of strings made by the readout function
         #creates a list, when start_of_table is found, 0 is returned, otherwise -1 is returned for every index in list of strings
         # print(start_candidates)
         j = 0
@@ -451,8 +451,8 @@ class Rmcdhf(Routine):
                 continue
             j += 1
         # print(start_candidates_index)
-        table_index = int(start_candidates_index[-1]) + 7
-        #the last element of list start_candidates_index is where the last iteration is found, and 7 indexes after that string is where the table starts
+        table_index = int(start_candidates_index[-1]) + 2
+        #the last element of list start_candidates_index is where the the headers of the last table are found, and 2 indexes after that string is where the table starts
         # print(table_index)
 
         end_of_table = " Average energy = "
@@ -493,10 +493,9 @@ class Rmcdhf(Routine):
         #the last index is where the table ends, as the index number is less than index number of where 'Average energy' is last found
         # print(end_table)
         
-        table = self.printout[table_index + 2:end_table]
-        #prints only the contents of the table, not the header
+        table = self.printout[table_index:end_table]
+        #prints the contents of the table
         # print(table)
-        # print()
         table = filter(None, table)
         #removes the line where None is returned
         table_list = [line.split() for line in table]
@@ -505,10 +504,8 @@ class Rmcdhf(Routine):
         for line in table_list:
             if len(line) < 11:
                 line.extend((11-len(line))*[''])
-                
         df = pd.DataFrame(table_list, columns= ['Subshell', 'Energy','Method','P0','Self-consistency','Norm-1','Damping factor','JP','MTP', "INV", 'NNP'], dtype=float)
         #returns the table, and assigns each column with a header
-        # df = df.to_string(index=False, header=False)
         return df
 
 class Rsave(Routine):
