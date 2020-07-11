@@ -119,7 +119,7 @@ def full_calculation(calc_dir,active_set,exc,n_open):
         if n_open == [6,6,5]:
             prefix = '3d(10,c)4s(2,i)4p(6,i)4d(10,i)5s(2,i)5p(6,i)'
         if n_open == [6,5,5]:
-            prefix = '3d(10,c)4s(2,i)4p(6,i)4d(10,i)5s(2,i)5p(*,i)'
+            prefix = '3d(10,c)4s(2,i)4p(6,i)4d(10,i)5s(2,i)5p(6,5)'
         if n_open == [5,6,5]:
             prefix = '3d(10,c)4s(2,i)4p(6,i)4d(10,i)5s(2,*)5p(6,i)'
         if n_open == [5,5,5]:
@@ -127,13 +127,13 @@ def full_calculation(calc_dir,active_set,exc,n_open):
         if n_open == [5,5,4]:
             prefix = '3d(10,c)4s(2,i)4p(6,i)4d(10,*)5s(2,*)5p(6,*)'
         if n_open == [5,4,4]:
-            prefix = '3d(10,c)4s(2,i)4p(6,*)4d(10,*)5s(2,*)5p(6,*)'
+            prefix = '3d(10,c)4s(2,i)4p(6,5)4d(10,9)5s(2,1)5p(6,5)'
         if n_open == [4,5,4]:
-            prefix = '3d(10,c)4s(2,*)4p(6,i)4d(10,*)5s(2,*)5p(6,*)'
+            prefix = '3d(10,c)4s(2,1)4p(6,i)4d(10,9)5s(2,1)5p(6,5)'
         if n_open == [4,4,5]:
-            prefix = '3d(10,c)4s(2,*)4p(6,*)4d(10,i)5s(2,*)5p(6,*)'
+            prefix = '3d(10,c)4s(2,1)4p(6,5)4d(10,i)5s(2,1)5p(6,5)'
         if n_open == [4,4,4]:
-            prefix = '3d(10,c)4s(2,*)4p(6,*)4d(10,*)5s(2,*)5p(6,*)'
+            prefix = '3d(10,c)4s(2,1)4p(6,5)4d(10,9)5s(2,1)5p(6,5)'
         exp_6s2 = Rcsfgenerate('Ar',[prefix +  '4f(14,13)6s(2,*)'],active_set=active_set,jlower=0,jhigher=2,exc=exc,write_csf=write_csf)
         exp_4f5d = Rcsfgenerate('Ar',[prefix + '4f(14,i)5d(1,*)6s(1,*)'],active_set=active_set,jlower=0,jhigher=10,exc=exc,write_csf=write_csf)
         zeros_6p2= Rcsfgenerate('Ar',[prefix + '4f(14,i)6p(2,*)'],active_set=active_set,jlower=exc,jhigher=6,exc=0,write_csf=write_csf)
@@ -178,6 +178,7 @@ def full_calculation(calc_dir,active_set,exc,n_open):
     Rsave('safronova').execute(workdir = dir_ci)
     Rmixextract(calc_name = 'safronova',use_ci = True,tolerance = 0.05, sort = True, write_csf = 'rmix_5e-2.out').execute(dir_ci)
     Rlevels('safronova.cm').execute(dir_ci)
+    Redf(use_ci = True, calcname = 'safronova').execute(dir_ci)
 
 import argparse
 if __name__ == '__main__':
