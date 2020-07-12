@@ -269,10 +269,10 @@ class Rcsfzerofirst(CSFRoutine):
                        params=[small_exp,big_exp])
 
 class Rmixaccumulate(Routine):
-    def __init__(self,calcname,useCI,truncate_eps,write_csf = 'rcsf.out'):
+    def __init__(self,calcname,use_ci,truncate_eps,write_csf = 'rcsf.out'):
         self.write_csf = write_csf
         inputs = [f'{calcname}.cm',f'{calcname}.c']
-        params = [calcname,booltoyesno(useCI),str(truncate_eps),'y'] # always sort by mixing coeff
+        params = [calcname,booltoyesno(use_ci),str(truncate_eps),'y'] # always sort by mixing coeff
 
         super().__init__(name='rmixaccumulate',
                          inputs=inputs,
@@ -492,8 +492,8 @@ class Rmixextract(CSFRoutine):
                     params = params)
 
 class JJtoLSJ(Routine):
-    def __init__(self,calc_name,useCI,unique):
-        params = [calc_name,booltoyesno(useCI),booltoyesno(unique),'y'] #TODO: implement non-default settings
+    def __init__(self,calc_name,use_ci,unique):
+        params = [calc_name,booltoyesno(use_ci),booltoyesno(unique),'y'] #TODO: implement non-default settings
         inputs = [f'{calc_name}.c',f'{calc_name}.cm']
         outputs= [f'{calc_name}.lsj.lbl'] # and maybe some others
         super().__init__(name = 'jj2lsj',
@@ -527,13 +527,13 @@ class Rlevels(Routine):
         return df
 
 class Rhfs(Routine):
-    def __init__(self,calcname,useCI):
+    def __init__(self,calcname,use_ci):
         """
         Inputs:
         calcname (str): name of calculation without file extension, e.g. 2p_3
-        useCI (bool) : use mixing coefficients from CI calculation?
+        use_ci (bool) : use mixing coefficients from CI calculation?
         """
-        params = ['y',calcname,booltoyesno(useCI)] #TODO: implement non-default settings
+        params = ['y',calcname,booltoyesno(use_ci)] #TODO: implement non-default settings
         inputs = ['isodata',f'{calcname}.w',f'{calcname}.c',f'{calcname}.cm']
         outputs= [f'{calcname}.ch',f'{calcname}.choffd'] # and maybe some others
         super().__init__(name = 'rhfs',
@@ -542,15 +542,15 @@ class Rhfs(Routine):
                     params = params)
 
 class Rbiotransform(Routine):
-    def __init__(self,useCI,calcname_initial,calcname_final,transform_all=True):
+    def __init__(self,use_ci,calcname_initial,calcname_final,transform_all=True):
         """
         Inputs:
-        useCI (bool) : use mixing coefficients from CI calculation?
+        use_ci (bool) : use mixing coefficients from CI calculation?
         calcname_initial (str): name of calculation without file extension, e.g. 2s_3
         calcname_final (str): name of calculation without file extension, e.g. 2p_3. Order of initial/final doesn't matter.
         transform_all (bool): Transform all J symmetries? Default True.
         """
-        params = ['y',booltoyesno(useCI),calcname_initial,calcname_final,booltoyesno(transform_all)] #TODO: implement non-default settings
+        params = ['y',booltoyesno(use_ci),calcname_initial,calcname_final,booltoyesno(transform_all)] #TODO: implement non-default settings
         if calcname_initial == calcname_final:
             params.insert(4,'y')
         inputs = ['isodata',f'{calcname_initial}.c',f'{calcname_initial}.cm',f'{calcname_initial}.w',f'{calcname_final}.c',f'{calcname_final}.cm',f'{calcname_final}.w']
@@ -560,15 +560,15 @@ class Rbiotransform(Routine):
                     outputs= outputs,
                     params = params)
 class Rtransition(Routine):
-    def __init__(self,useCI,calcname_initial,calcname_final,transition_spec):
+    def __init__(self,use_ci,calcname_initial,calcname_final,transition_spec):
         """
         Inputs:
-        useCI (bool) : use mixing coefficients from CI calculation?
+        use_ci (bool) : use mixing coefficients from CI calculation?
         calcname_initial (str): name of calculation without file extension, e.g. 2s_3
         calcname_final (str): name of calculation without file extension, e.g. 2p_3. Order of initial/final doesn't matter.
         transition_spec (list of str): E.g. ['E1','M2']
         """
-        params = ['y',booltoyesno(useCI),calcname_initial,calcname_final, ','.join(transition_spec)] #TODO: implement non-default settings
+        params = ['y',booltoyesno(use_ci),calcname_initial,calcname_final, ','.join(transition_spec)] #TODO: implement non-default settings
         inputs = ['isodata',f'{calcname_final}.w',f'{calcname_final}.bw',f'{calcname_final}.cbm',f'{calcname_initial}.w',f'{calcname_initial}.bw',f'{calcname_initial}.cbm',]
         outputs= [f'{calcname_initial}.{calcname_final}.ct',f'{calcname_initial}.{calcname_final}.-1T']
         super().__init__(name = 'rtransition',
@@ -576,3 +576,21 @@ class Rtransition(Routine):
                     outputs= outputs,
                     params = params)
 
+class Redf(Routine):
+    def __init__(self,use_ci,calcname):
+        """
+        Inputs:
+        use_ci (bool) : use mixing coefficients from CI calculation?
+        calcname (str): name of calculation without file extension, e.g. 2s_3
+        """
+        params = ['y',calcname,booltoyesno(use_ci)] #TODO: implement non-default settings
+        inputs = ['isodata',f'{calcname}.c',f'{calcname}.w']
+        if params[2]:
+            inputs.append(f'{calcname}.cm') # only needed in a CI calculation
+            outputs= [f'{calcname}.ced']
+        else:
+            outputs= [f'{calcname}.ed']
+        super().__init__(name = 'redf',
+                    inputs = inputs,
+                    outputs= outputs,
+                    params = params)
