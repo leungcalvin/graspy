@@ -420,6 +420,94 @@ class Rmcdhf(Routine):
                          inputs = ['isodata','rcsf.inp','rwfn.inp'],
                          outputs = ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log'],
                          params=params)
+        
+    def readout(self):
+        last_index = self.printout.index(" RMCDHF: Execution complete.")
+        #index of last element in function readout
+        # print(last_index)
+        last_candidates_index = []
+        #empty list where the index number of where 'Average Energy' is found 
+        last_candidates_index_1 = []
+        #empty list where the index number of potential ending of the last table is stored
+        start_candidates_index = []
+        #empty list where the index number of potential starting of the last table is stored
+
+        start_of_table = "Subshell    Energy    Method   P0    consistency  Norm-1  factor  JP MTP INV NNP"
+        #every time 'Subshell ...' (the headers of the table) is found, a table follows 
+        start_candidates = [line.find(start_of_table) for line in self.printout]
+        #searches for 'Subshell ...' in the list of strings made by the readout function
+        #creates a list, when start_of_table is found, 0 is returned, otherwise -1 is returned for every index in list of strings
+        # print(start_candidates)
+        j = 0
+        #starting index
+        for j in range(last_index):
+            #for every index in the range of the last_index number
+            if start_candidates[j] == 0:
+                #if the element in the list with index number j has the value 0
+                start_index = j
+                #stores the index number where 0 is found
+                start_candidates_index.append(start_index)
+                #appends that number to in list of start_candidates_index
+            else:
+                continue
+            j += 1
+        # print(start_candidates_index)
+        table_index = int(start_candidates_index[-1]) + 2
+        #the last element of list start_candidates_index is where the the headers of the last table are found, and 2 indexes after that string is where the table starts
+        # print(table_index)
+
+        end_of_table = " Average energy = "
+         #every time 'Average energy' is found, the table has ended before that string 
+        end_candidates = [line.find(end_of_table) for line in self.printout]
+        #searches for 'Average energy' in the list of strings made by the readout function
+        #creates a list, when end_of_table is found, 0 is returned, otherwise -1 is returned for every index in list of strings
+        # print(end_candidates)
+        i = 0
+        #starting index
+        for i in range(last_index):
+            #for every index in the range of the last_index number
+            if end_candidates[i] == 0:
+                #if the element in the list with index number i has the value 0
+                end_index = i
+                #stores the index number where 0 is found
+                last_candidates_index.append(end_index)
+                #appends that number into the list last_candidates_index
+            else:
+                continue
+            i += 1
+        # print(last_candidates_index)
+        last_candidate = int(last_candidates_index[-1])
+        #the last index where 'Average energy' is found
+        for i in range(last_candidate):
+            #for every index in the range of the last_candidate number
+            if end_candidates[i] == -1:
+                #if the element in the list with index number i has the value 0
+                end_index_1 = i
+                #stores the index number where -1 is found 
+                last_candidates_index_1.append(end_index_1)
+                #appends the number into the list last_candidates_index_1
+            else: 
+                continue
+            i += 1
+        # print(last_candidates_index_1)
+        end_table = int(last_candidates_index_1[-1]) 
+        #the last index is where the table ends, as the index number is less than index number of where 'Average energy' is last found
+        # print(end_table)
+        
+        table = self.printout[table_index:end_table]
+        #prints the contents of the table
+        # print(table)
+        table = filter(None, table)
+        #removes the line where None is returned
+        table_list = [line.split() for line in table]
+        #splits the list of strings of the table into seperate lines
+        # print(table_list)
+        for line in table_list:
+            if len(line) < 11:
+                line.extend((11-len(line))*[''])
+        df = pd.DataFrame(table_list, columns= ['Subshell', 'Energy','Method','P0','Self-consistency','Norm-1','Damping factor','JP','MTP', "INV", 'NNP'], dtype=float)
+        #returns the table, and assigns each column with a header
+        return df
 
 class Rsave(Routine):
     def __init__(self,calcname):
