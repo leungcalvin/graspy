@@ -8,11 +8,12 @@ from os import path
 import warnings
 
 def str_to_float(string):
-    parts = string.split('D')
-    if len(parts) == 1:
-        return float(parts[0])
-    if len(parts) == 2:
-        return float(parts[0]) * 10**(int(parts[1]))
+    if type(string) is not float:
+        parts = string.split('D')
+        if len(parts) == 1:
+            return float(parts[0])
+        if len(parts) == 2:
+            return float(parts[0]) * 10**(int(parts[1]))
 
 def float_to_str(number):
     return "{:.9e}".format(number).replace('e','D')
@@ -507,6 +508,9 @@ class Rmcdhf(Routine):
                 line.extend((11-len(line))*[''])
         df = pd.DataFrame(table_list, columns= ['Subshell', 'Energy','Method','P0','Self-consistency','Norm-1','Damping factor','JP','MTP', "INV", 'NNP'], dtype=float)
         #returns the table, and assigns each column with a header
+        # Finally, converts improperly-formatted columns to usable data types.
+        for col in ['Energy','P0','Self-consistency', 'Norm-1']:
+            df[col] = df[col].apply(str_to_float)
         return df
 
 class Rsave(Routine):
