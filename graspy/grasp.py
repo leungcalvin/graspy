@@ -214,20 +214,20 @@ class Rcsfgenerate(Routine):
 list_to_designation = lambda orblist: ','.join([str(n)+l for n,l in zip(orblist,['s','p','d','f','g','h','i','l'])])
 
 class Rcsfsplit(Routine):
-    def __init__(self,calcname,nsplit,splitorbs,write_csf = 'rcsf.inp'):
+    def __init__(self,calc_name,nsplit,splitorbs,write_csf = 'rcsf.inp'):
         if type(splitorbs[0]) is int: # if splits are specified by maximum principal quantum number value
             splitnames = [str(n) for n in splitorbs]
             splitorbs = [[n]*n for n in splitorbs]
             #print(splitnames,'splitnames')
         else: # generate default splitnames
             splitnames = [str(n) for n in range(nsplit)]
-        params = [calcname,str(nsplit)]
+        params = [calc_name,str(nsplit)]
         for splitname,splitorb in zip(splitnames,splitorbs):
             params.append(list_to_designation(splitorb))
             params.append(splitname)
         super().__init__(name=f'rcsfsplit',
-                         inputs = [f'{calcname}.c'],
-                         outputs= [f'{calcname}{ext}.c' for ext in splitnames],
+                         inputs = [f'{calc_name}.c'],
+                         outputs= [f'{calc_name}{ext}.c' for ext in splitnames],
                          params = params)
 
 
@@ -269,10 +269,10 @@ class Rcsfzerofirst(CSFRoutine):
                        params=[small_exp,big_exp])
 
 class Rmixaccumulate(Routine):
-    def __init__(self,calcname,use_ci,truncate_eps,write_csf = 'rcsf.out'):
+    def __init__(self,calc_name,use_ci,truncate_eps,write_csf = 'rcsf.out'):
         self.write_csf = write_csf
-        inputs = [f'{calcname}.cm',f'{calcname}.c']
-        params = [calcname,booltoyesno(use_ci),str(truncate_eps),'y'] # always sort by mixing coeff
+        inputs = [f'{calc_name}.cm',f'{calc_name}.c']
+        params = [calc_name,booltoyesno(use_ci),str(truncate_eps),'y'] # always sort by mixing coeff
 
         super().__init__(name='rmixaccumulate',
                          inputs=inputs,
@@ -420,20 +420,20 @@ class Rmcdhf(Routine):
                          inputs = ['isodata','rcsf.inp','rwfn.inp'],
                          outputs = ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log'],
                          params=params)
-        
+
     def readout(self):
         last_index = self.printout.index(" RMCDHF: Execution complete.")
         #index of last element in function readout
         # print(last_index)
         last_candidates_index = []
-        #empty list where the index number of where 'Average Energy' is found 
+        #empty list where the index number of where 'Average Energy' is found
         last_candidates_index_1 = []
         #empty list where the index number of potential ending of the last table is stored
         start_candidates_index = []
         #empty list where the index number of potential starting of the last table is stored
 
         start_of_table = "Subshell    Energy    Method   P0    consistency  Norm-1  factor  JP MTP INV NNP"
-        #every time 'Subshell ...' (the headers of the table) is found, a table follows 
+        #every time 'Subshell ...' (the headers of the table) is found, a table follows
         start_candidates = [line.find(start_of_table) for line in self.printout]
         #searches for 'Subshell ...' in the list of strings made by the readout function
         #creates a list, when start_of_table is found, 0 is returned, otherwise -1 is returned for every index in list of strings
@@ -457,7 +457,7 @@ class Rmcdhf(Routine):
         # print(table_index)
 
         end_of_table = " Average energy = "
-         #every time 'Average energy' is found, the table has ended before that string 
+         #every time 'Average energy' is found, the table has ended before that string
         end_candidates = [line.find(end_of_table) for line in self.printout]
         #searches for 'Average energy' in the list of strings made by the readout function
         #creates a list, when end_of_table is found, 0 is returned, otherwise -1 is returned for every index in list of strings
@@ -483,17 +483,17 @@ class Rmcdhf(Routine):
             if end_candidates[i] == -1:
                 #if the element in the list with index number i has the value 0
                 end_index_1 = i
-                #stores the index number where -1 is found 
+                #stores the index number where -1 is found
                 last_candidates_index_1.append(end_index_1)
                 #appends the number into the list last_candidates_index_1
-            else: 
+            else:
                 continue
             i += 1
         # print(last_candidates_index_1)
-        end_table = int(last_candidates_index_1[-1]) 
+        end_table = int(last_candidates_index_1[-1])
         #the last index is where the table ends, as the index number is less than index number of where 'Average energy' is last found
         # print(end_table)
-        
+
         table = self.printout[table_index:end_table]
         #prints the contents of the table
         # print(table)
@@ -510,30 +510,30 @@ class Rmcdhf(Routine):
         return df
 
 class Rsave(Routine):
-    def __init__(self,calcname):
+    def __init__(self,calc_name):
         """
         Inputs:
         -------
         name the calculation without a file extension.
         ------
         """
-        super().__init__(name=f'rsave {calcname}',
+        super().__init__(name=f'rsave {calc_name}',
                          inputs = [],# ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log']; rsave will succeed even if some of these are missing
-                         outputs= [f'{calcname}.{ext}' for ext in ['c','m','w','sum','log']],
+                         outputs= [f'{calc_name}.{ext}' for ext in ['c','m','w','sum','log']],
                          params = [])
 
 class Rasfsplit(Routine):
-    def __init__(self,calcname,something):
+    def __init__(self,calc_name,something):
         """
         Inputs:
         -------
-        calcname: name of the calculation without a file extension.
+        calc_name: name of the calculation without a file extension.
         same (bool): whether csfs are generated from same set of orbitals. Default yes.
 
         ------
         """
         super().__init__(name=f'rasfsplit',
-                         inputs = [f'{calcname}.c'],
+                         inputs = [f'{calc_name}.c'],
                          outputs= [],
                          params = [booltoyesno(same)])
 
@@ -594,7 +594,7 @@ class Rlevels(Routine):
         if type(files) is str:
             files = [files]
 
-        params = files + [''] #newline to terminate calcname input
+        params = files + [''] #newline to terminate calc_name input
         # TODO: implement multiple calculation results
         super().__init__(name = 'rlevels',
                     inputs = list(files),
@@ -615,69 +615,69 @@ class Rlevels(Routine):
         return df
 
 class Rhfs(Routine):
-    def __init__(self,calcname,use_ci):
+    def __init__(self,calc_name,use_ci):
         """
         Inputs:
-        calcname (str): name of calculation without file extension, e.g. 2p_3
+        calc_name (str): name of calculation without file extension, e.g. 2p_3
         use_ci (bool) : use mixing coefficients from CI calculation?
         """
-        params = ['y',calcname,booltoyesno(use_ci)] #TODO: implement non-default settings
-        inputs = ['isodata',f'{calcname}.w',f'{calcname}.c',f'{calcname}.cm']
-        outputs= [f'{calcname}.ch',f'{calcname}.choffd'] # and maybe some others
+        params = ['y',calc_name,booltoyesno(use_ci)] #TODO: implement non-default settings
+        inputs = ['isodata',f'{calc_name}.w',f'{calc_name}.c',f'{calc_name}.cm']
+        outputs= [f'{calc_name}.ch',f'{calc_name}.choffd'] # and maybe some others
         super().__init__(name = 'rhfs',
                     inputs = inputs,
                     outputs= outputs,
                     params = params)
 
 class Rbiotransform(Routine):
-    def __init__(self,use_ci,calcname_initial,calcname_final,transform_all=True):
+    def __init__(self,use_ci,calc_name_initial,calc_name_final,transform_all=True):
         """
         Inputs:
         use_ci (bool) : use mixing coefficients from CI calculation?
-        calcname_initial (str): name of calculation without file extension, e.g. 2s_3
-        calcname_final (str): name of calculation without file extension, e.g. 2p_3. Order of initial/final doesn't matter.
+        calc_name_initial (str): name of calculation without file extension, e.g. 2s_3
+        calc_name_final (str): name of calculation without file extension, e.g. 2p_3. Order of initial/final doesn't matter.
         transform_all (bool): Transform all J symmetries? Default True.
         """
-        params = ['y',booltoyesno(use_ci),calcname_initial,calcname_final,booltoyesno(transform_all)] #TODO: implement non-default settings
-        if calcname_initial == calcname_final:
+        params = ['y',booltoyesno(use_ci),calc_name_initial,calc_name_final,booltoyesno(transform_all)] #TODO: implement non-default settings
+        if calc_name_initial == calc_name_final:
             params.insert(4,'y')
-        inputs = ['isodata',f'{calcname_initial}.c',f'{calcname_initial}.cm',f'{calcname_initial}.w',f'{calcname_final}.c',f'{calcname_final}.cm',f'{calcname_final}.w']
-        outputs = [f'{calcname_initial}.cbm',f'{calcname_initial}.bw',f'{calcname_initial}.TB',f'{calcname_final}.cbm',f'{calcname_final}.bw',f'{calcname_final}.TB']
+        inputs = ['isodata',f'{calc_name_initial}.c',f'{calc_name_initial}.cm',f'{calc_name_initial}.w',f'{calc_name_final}.c',f'{calc_name_final}.cm',f'{calc_name_final}.w']
+        outputs = [f'{calc_name_initial}.cbm',f'{calc_name_initial}.bw',f'{calc_name_initial}.TB',f'{calc_name_final}.cbm',f'{calc_name_final}.bw',f'{calc_name_final}.TB']
         super().__init__(name = 'rbiotransform',
                     inputs = inputs,
                     outputs= outputs,
                     params = params)
 class Rtransition(Routine):
-    def __init__(self,use_ci,calcname_initial,calcname_final,transition_spec):
+    def __init__(self,use_ci,calc_name_initial,calc_name_final,transition_spec):
         """
         Inputs:
         use_ci (bool) : use mixing coefficients from CI calculation?
-        calcname_initial (str): name of calculation without file extension, e.g. 2s_3
-        calcname_final (str): name of calculation without file extension, e.g. 2p_3. Order of initial/final doesn't matter.
+        calc_name_initial (str): name of calculation without file extension, e.g. 2s_3
+        calc_name_final (str): name of calculation without file extension, e.g. 2p_3. Order of initial/final doesn't matter.
         transition_spec (list of str): E.g. ['E1','M2']
         """
-        params = ['y',booltoyesno(use_ci),calcname_initial,calcname_final, ','.join(transition_spec)] #TODO: implement non-default settings
-        inputs = ['isodata',f'{calcname_final}.w',f'{calcname_final}.bw',f'{calcname_final}.cbm',f'{calcname_initial}.w',f'{calcname_initial}.bw',f'{calcname_initial}.cbm',]
-        outputs= [f'{calcname_initial}.{calcname_final}.ct',f'{calcname_initial}.{calcname_final}.-1T']
+        params = ['y',booltoyesno(use_ci),calc_name_initial,calc_name_final, ','.join(transition_spec)] #TODO: implement non-default settings
+        inputs = ['isodata',f'{calc_name_final}.w',f'{calc_name_final}.bw',f'{calc_name_final}.cbm',f'{calc_name_initial}.w',f'{calc_name_initial}.bw',f'{calc_name_initial}.cbm',]
+        outputs= [f'{calc_name_initial}.{calc_name_final}.ct',f'{calc_name_initial}.{calc_name_final}.-1T']
         super().__init__(name = 'rtransition',
                     inputs = inputs,
                     outputs= outputs,
                     params = params)
 
 class Redf(Routine):
-    def __init__(self,use_ci,calcname):
+    def __init__(self,use_ci,calc_name):
         """
         Inputs:
         use_ci (bool) : use mixing coefficients from CI calculation?
-        calcname (str): name of calculation without file extension, e.g. 2s_3
+        calc_name (str): name of calculation without file extension, e.g. 2s_3
         """
-        params = ['y',calcname,booltoyesno(use_ci)] #TODO: implement non-default settings
-        inputs = ['isodata',f'{calcname}.c',f'{calcname}.w']
+        params = ['y',calc_name,booltoyesno(use_ci)] #TODO: implement non-default settings
+        inputs = ['isodata',f'{calc_name}.c',f'{calc_name}.w']
         if params[2]:
-            inputs.append(f'{calcname}.cm') # only needed in a CI calculation
-            outputs= [f'{calcname}.ced']
+            inputs.append(f'{calc_name}.cm') # only needed in a CI calculation
+            outputs= [f'{calc_name}.ced']
         else:
-            outputs= [f'{calcname}.ed']
+            outputs= [f'{calc_name}.ed']
         super().__init__(name = 'redf',
                     inputs = inputs,
                     outputs= outputs,
