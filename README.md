@@ -11,14 +11,16 @@ We hope that condensing complex GRASP calculations into single Python scripts wi
 
 
 ## How To Install
-With a working GRASP 2018 installation and Python 3.6+, GRASPy should work right out of the box. Interfacing from GRASPy to GRASP is done entirely via the `os.subprocess()`, and `pandas.read_csv` is used to read out GRASP output (e.g. subshell energies) for manipulation and plotting in Python scripts.
+With a working GRASP 2018 installation and Python 3.7+, GRASPy should work right out of the box. Interfacing from GRASPy to GRASP is done entirely via the `os.subprocess()`, and `pandas.read_csv` is used to read out GRASP output (e.g. subshell energies) for manipulation and plotting in Python scripts.
 
 ```
 git clone https://github.com/leungcalvin/graspy/
+cd /path/to/graspy/
+pip install --user -e .
 ```
 
 ## How to Use
-As a pedagogical example, we have transcribed the first example , which calculates the 1s2 2s 2S and 1s2 2p 2P levels in Li I, into a Python script (`example1.py`). Running `python example1.py` will produce a directory `example1/` and output files inside.
+As a pedagogical example, we have transcribed the first example , which calculates the 1s2 2s 2S and 1s2 2p 2P levels in Li I, into a Python script (`example1.py`) which can be found in `graspy/graspytest`. Running `python example1.py` will produce a directory `example1/` and output files inside.
 
 ## Architecture
 Instead of executing a bunch of shell scripts in a particular folder as is documented in the GRASP 2018 manual,

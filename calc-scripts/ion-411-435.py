@@ -1,6 +1,6 @@
-from grasp import *
+from graspy.grasp import *
 core_dir = '/home/calvin/graspy/calc-scripts/cores'
-calc_dir = '../calc-outputs/ion-411-435'
+calc_dir = '/home/calvin/graspy/calc-outputs/ion-411-435'
 initialize(workdir = calc_dir, clist =
 ['1s','2s','2p','3s','3p','3d','4s','4p','4d','5s','5p','4f','5d','6s','6p','5f','6d','7p','8s'])
 
@@ -39,16 +39,17 @@ def generate_6s_5d():
 
 generate_6s_5d()
 
-def solve_orbs_2S12(active_levels,exc,active_set,optimize_orbs,rwfn_path,spec_orbs=[''],iccut = False,zero_first = False):
+def solve_orbs_2S12(active_levels,exc,active_set,optimize_orbs,rwfn_path,spec_orbs=[''],iccut = False,zero_first = False,write_csf = 'rcsf.inp'):
     cmdlist = []
     yb_inactive_core = '1s(2,c)2s(2,c)2p(6,c)3s(2,c)3p(6,c)3d(10,c)4s(2,c)4p(6,c)4d(10,c)'
     cmdlist.append(Rcsfgenerate('None',
+                    ordering = 'User specified',
                     csflist = [yb_inactive_core + active_levels],
                     activeset=active_set,
-                    jlower=1,jhigher=1,exc=2))
+                    jlower=1,jhigher=1,exc=2,write_csf = write_csf))
     if zero_first:
         cmdlist += [Rcsfinteract('Dirac-Coulomb'),
-                    Rcsfzerofirst(small_exp = f'../calc-scripts/cores/rcsf_2S12_mr0.99.inp',big_exp = 'rcsf.inp',write_csf = 'rcsf.inp')]
+                    Rcsfzerofirst(small_exp = f'/home/calvin/graspy/calc-scripts/cores/rcsf_2S12_mr0.99.inp',big_exp = 'rcsf.inp',write_csf = 'rcsf.inp')]
     if iccut is not False:
         cmdlist.append(Rangular(iccut = iccut))
     else:
@@ -66,21 +67,28 @@ solve_orbs_2S12(zero_first = False,
            active_set = [6,5,4,4],
            optimize_orbs = ['*'],
            spec_orbs = ['*'],
-           rwfn_path = '6s_5d.w') # take DHF rwfn
+           rwfn_path = os.path.join(calc_dir,'rwfn_6s_5d.out'),
+           write_csf = 'rcsfmr.inp')
+# take DHF rwfn and write to rcsfmr.inp in first round
 solve_orbs_2S12(zero_first = True,
                active_levels = '5s(2,*)5p(6,*)4f(14,*)6s(1,*)',
                exc = 2,
                active_set = [7,6,5,5,5],
+               #iccut = [147],
                optimize_orbs = ['7s','6p-','6p','5d-','5d',
                           '5f-','5f','5g-','5g'],
-               rwfn_path = os.path.join(calc_dir,'6s_5d.w')) # take DHF rwfn
+               spec_orbs= [''],
+               rwfn_path = os.path.join(calc_dir,'rwfn_6s_5d.out')) # take DHF rwfn
+print('Correct up to here!')
+assert 1 == 0
+
 solve_orbs_2S12(zero_first = True,
                active_levels = '5s(2,*)5p(6,*)4f(14,*)6s(1,*)',
                exc = 2,
                active_set = [8,7,6,6,5],
                optimize_orbs = ['8s','7p-','7p','6d-','6d',
                           '6f-','6f'],
-               rwfn_path = os.path.join(calc_dir,'rwfn.out'))
+               rwfn_path = ''))
 
 Rsave('2S12').execute(workdir = calc_dir)
 # Rci(calcname = '2S12',

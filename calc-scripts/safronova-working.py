@@ -1,4 +1,4 @@
-from grasp import *
+from graspy.grasp import *
 #This file implements the GRASP calculation documented here:
 
 dir_6s2 = '/home/calvin/graspy/safronova/est_6s2'
@@ -164,7 +164,7 @@ ci_run_expanded = [
 readout = [
         Rmixextract('safronova',useCI=True,tolerance = 0.001,sort=True),
         JJtoLSJ('safronova',useCI=True,unique=True),
-        Rlevels(calcname='safronova')
+        Rlevels(files='safronova')
         ]
 
 #mr_6s2.execute(workdir = dir_6s2, writeMR=True) # define the multireference

@@ -1,0 +1,15 @@
+ nblock =            1   ncftot =            3   nw =           22   nelec =           69
+ nblock =            1   ncftot =            3   nw =           22   nelec =           69
+ nblock =            1   ncftot =            3   nw =           22   nelec =           69
+
+ Energy levels for ...
+ Rydberg constant is   109737.31569
+ Splitting is the energy difference with the lower neighbor
+------------------------------------------------------------------------------------------
+ No Pos  J Parity Energy Total    Levels     Splitting     Configuration
+                      (a.u.)         (eV)         (eV)
+------------------------------------------------------------------------------------------
+  1  1  1/2 +  -14067.6502793        0.00000        0.00000  6s_2S1
+  2  1  3/2 +  -14067.5431959        2.91389        2.91389  5d_2D1
+  3  1  5/2 +  -14067.5406570        2.98298        0.06909  5d_2D1
+------------------------------------------------------------------------------------------

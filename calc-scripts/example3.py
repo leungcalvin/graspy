@@ -20,7 +20,11 @@ MR_DHF =[
         Rnucleus(Z=14,A=28,neutralMass=27.9769271,I=1,NDM=1,NQM=1),
         Rangular(),
         Rwfnestimate(orbdict = None, fallback='Screened Hydrogenic'),
+<<<<<<< HEAD
         Rmcdhf([[1,2],[1,2,3,4],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weightingmethod = 'Standard'),
+=======
+        Rmcdhf([[1,2],[1,2,3,4],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'),
+>>>>>>> master
         Rsave('2s22p3_2p5_DF')
         ]
 [cmd.execute(workdir = testdir) for cmd in MR_DHF]
@@ -29,7 +33,11 @@ CAS_a = Rcsfgenerate(core='None',ordering = 'Default',
             csflist=['1s(2,*)2s(2,*)2p(3,*)'],
             activeset=[3,3,3],
             jlower=1,jhigher=5,exc=2,write_csf = 'rcsf.inp')
+<<<<<<< HEAD
             
+=======
+
+>>>>>>> master
 CAS_b = Rcsfgenerate(core='None',ordering = 'Default',
     csflist=['1s(2,*)2p(5,*)'],
     activeset=[3,3,3],
@@ -38,16 +46,28 @@ CAS_b = Rcsfgenerate(core='None',ordering = 'Default',
 CAS_2S_exp = CAS_a + CAS_b
 CAS_2S_exp.execute(workdir = testdir)
 
+<<<<<<< HEAD
+=======
+interact = Rcsfinteract('Dirac-Coulomb')
+interact.execute(workdir=testdir)
+
+>>>>>>> master
 CAS_2S = [
         Rangular(),
         Rwfnestimate(orbdict = {'*':'2s22p3_2p5_DF.w'},fallback = 'Screened Hydrogenic'),
         Rmcdhf([[1,2],[1,2,3,4],[1]],
             orbs = ['3*'],
             specorbs = [' '],
+<<<<<<< HEAD
             runs = 100, weightingmethod = 'Standard'),
         Rsave('2s22p3_2p5_3')
         ]
         
+=======
+            runs = 100, weighting_method = 'Standard'),
+        Rsave('2s22p3_2p5_3')
+        ]
+>>>>>>> master
 [cmd.execute(workdir = testdir) for cmd in CAS_2S]
 indices_try=[[1,2],[1,2,3,4],[1]]
 
