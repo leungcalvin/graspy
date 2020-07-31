@@ -49,10 +49,24 @@ angular_integration(testdir)
 
 principle_quantum = [1, 2, 3, 4, 5, 6 ,7]
 
+orb_list = [['1s'],         #list of orbitals to be passed into each n iteration
+['1s','2s*','2p*'],
+['1s','2s*','2p*','3s','3p*','3d*'],
+['1s','2s*','2p*','3s','3p*','3d*','4s','4p*','4d*', '4f*'],
+['1s','2s*','2p*','3s','3p*','3d*','4s','4p*','4d*', '4f*', '5s','5p*','5d*','5f*'],
+['1s','2s*','2p*','3s','3p*','3d*','4s','4p*','4d*', '4f*', '5s','5p*','5d*','5f*', '6s', '6p*','6d*'],
+['1s','2s*','2p*','3s','3p*','3d*','4s','4p*','4d*', '4f*', '5s','5p*','5d*','5f*', '6s', '6p*','6d*','7s','7p*']]
+
 old_rwfn = None
-for i in principle_quantum:
+for orb_config in orb_list[0:1]:
+    print("Running ", *(orb_config))
     estimate_wavefunctions(testdir,old_rwfn)
-    rwfn_cp_file = 'rwfn' + str(i) + '.inp'
-    copyfile(path.join(testdir, 'rwfn.inp'),path.join(testdir, rwfn_cp_file))
-    old_rwfn=rwfn_cp_file
+    old_rwfn = run_hartree_fock_save(testdir, grid=None,orbs = orb_config,specorbs = ['*'],integration_method = None,calc_name = None)
+    
+    
+    
+    #rwfn_cp_file = 'rwfn' + str(i) + '.inp'
+    #copyfile(path.join(testdir, 'rwfn.inp'),path.join(testdir, rwfn_cp_file))
+    #old_rwfn=rwfn_cp_file
+#run_hartree_fock_save(testdir, grid=None, orbs=['*'],specorbs = ['*'],integration_method = None,calc_name = None)
 
