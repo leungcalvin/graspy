@@ -3,7 +3,7 @@ import shutil
 #
 # This implements the GRASP 2018 script demonstration as found in the GRASP 2018 manual, using the GRASPy interface.
 #
-testdir = '/Users/admin/Desktop/asdrp2020/graspy/calc-outputs'
+testdir = '/Users/admin/Desktop/asdrp2020/grasp/grasptest/case1/script'
 initialize(workdir=testdir)
 
 #Generate odd CSF expansions  1.1 MR for 2s(2)2p, 2p(3)
@@ -103,9 +103,9 @@ for n in range(3,6):
                 #should it be f'odd{n}' or 'odd'
         [cmd.execute(workdir = testdir) for cmd in calculations_odd]
         # transform to LSJ-coupling
-        LSJ_coupling_odd = JJtoLSJ(calc_name= f'odd{n}',use_ci = True, unique = True)
-        #should it be f'odd{n}' or 'odd'
-        [cmd.execute(workdir = testdir) for cmd in LSJ_coupling_odd]
+        # LSJ_coupling_odd = JJtoLSJ(calc_name= f'odd{n}',use_ci = True, unique = True)
+        # #should it be f'odd{n}' or 'odd'
+        # [cmd.execute(workdir = testdir) for cmd in LSJ_coupling_odd]
         n += 1
 
         ## Perform Breit-correction using RCI for n=6. First copy to other file names
@@ -132,7 +132,7 @@ for n in range(3,6):
                         #output = outodd_rci
                 [cmd.execute(workdir = testdir) for cmd in BC_odd]
         else:
-                break
+                continue
         # transform to LSJ-coupling
         Transform_LSJ_odd = JJtoLSJ(calc_name= f'oddCI{n}',use_ci = True, unique = True)
         #should it be f'oddCI{n}' or 'oddCI'
@@ -159,9 +159,9 @@ for n in range(3,6):
                 #should it be f'even{n}' or 'even'
         [cmd.execute(workdir = testdir) for cmd in calculations_even]
         # transform to LSJ-coupling        
-        LSJ_coupling_even = JJtoLSJ(calc_name= f'even{n}',use_ci = True, unique = True)
-        #should it be f'even{n}' or 'even'
-        [cmd.execute(workdir = testdir) for cmd in LSJ_coupling_even]
+        # LSJ_coupling_even = JJtoLSJ(calc_name= f'even{n}',use_ci = True, unique = True)
+        # #should it be f'even{n}' or 'even'
+        # [cmd.execute(workdir = testdir) for cmd in LSJ_coupling_even]
         n += 1
 
         # Perform Breit-correction using RCI for n=6
@@ -188,7 +188,7 @@ for n in range(3,6):
                         #output = outeven_rci
                 [cmd.execute(workdir = testdir) for cmd in BC_even]
         else: 
-                break
+                continue
         # transform to LSJ-coupling
         Transform_LSJ_even = JJtoLSJ(calc_name= f'evenCI{n}',use_ci = True, unique = True)
         #should it be f'evenCI{n}' or 'evenCI'
