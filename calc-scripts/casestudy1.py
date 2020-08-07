@@ -23,64 +23,64 @@ odd_exp = Rcsfgenerate(core='None',ordering = 'Default',
 
 odd_mr.execute(workdir = testdir) #the execute() method performs the actual call to GRASP 2018.
 
-# Split into odd3.c, odd4.c, odd5.c, odd6.c
-odd_exp_split = Rcsfsplit(calc_name = 'odd',nsplit=4,splitorbs = range(3,7))
-odd_exp_split.execute(workdir = testdir)
+# # Split into odd3.c, odd4.c, odd5.c, odd6.c
+# odd_exp_split = Rcsfsplit(calc_name = 'odd',nsplit=4,splitorbs = range(3,7))
+# odd_exp_split.execute(workdir = testdir)
 
-#Generate even CSF expansions 2.1 for 2s2p(2)
-even_2s2p2_mr = Rcsfgenerate(core='None',ordering = 'Default',
-            csflist=['1s(2,i)2s(1,i)2p(2,i)',
-                     ],
-            active_set=[2,2],
-            jlower=1,jhigher=5,exc=0, write_csf= 'even2.c')
-            #cp rcsf.out even2.c -> do i need to add rcsf.out?
+# #Generate even CSF expansions 2.1 for 2s2p(2)
+# even_2s2p2_mr = Rcsfgenerate(core='None',ordering = 'Default',
+#             csflist=['1s(2,i)2s(1,i)2p(2,i)',
+#                      ],
+#             active_set=[2,2],
+#             jlower=1,jhigher=5,exc=0, write_csf= 'even2.c')
+#             #cp rcsf.out even2.c -> do i need to add rcsf.out?
 
-even_2s2p2_exp = Rcsfgenerate(core='None',ordering = 'Default',
-            csflist=['1s(2,*)2s(1,*)2p(2,*)',
-                     ],
-            active_set=[6,6,6,6,6,6],
-            jlower=1,jhigher=5,exc=2, write_csf='even.c')
-            #cp rcsf.out even.c -> do i need to add rcsf.out?
+# even_2s2p2_exp = Rcsfgenerate(core='None',ordering = 'Default',
+#             csflist=['1s(2,*)2s(1,*)2p(2,*)',
+#                      ],
+#             active_set=[6,6,6,6,6,6],
+#             jlower=1,jhigher=5,exc=2, write_csf='even.c')
+#             #cp rcsf.out even.c -> do i need to add rcsf.out?
 
-even_2s2p2_mr.execute(workdir = testdir)
+# even_2s2p2_mr.execute(workdir = testdir)
 
-#Split into even3.c, even4.c, even5.c, even6.c
-even_2s2p2_exp_split = Rcsfsplit(calc_name = 'even',nsplit = 4, splitorbs = range(3,7))
-even_2s2p2_exp_split.execute(workdir = testdir)
+# #Split into even3.c, even4.c, even5.c, even6.c
+# even_2s2p2_exp_split = Rcsfsplit(calc_name = 'even',nsplit = 4, splitorbs = range(3,7))
+# even_2s2p2_exp_split.execute(workdir = testdir)
 
-#2. Get Nuclear Data
-nuclear_data = Rnucleus(Z = 42, A = 96, neutralMass = 96, I = 1, NDM = 1,NQM = 1)
-nuclear_data.execute(workdir = testdir)
+# #2. Get Nuclear Data
+# nuclear_data = Rnucleus(Z = 42, A = 96, neutralMass = 96, I = 1, NDM = 1,NQM = 1)
+# nuclear_data.execute(workdir = testdir)
 
-#3. Get initial estimate
-#For n=2, Get initial estimates for odd.
-#copy odd2.c to rcsf.inp
-path_to_copy = os.path.join(testdir,'odd2.c')
-target_path = os.path.join(testdir,'rcsf.inp')
-shutil.copyfile(path_to_copy,target_path)
+# #3. Get initial estimate
+# #For n=2, Get initial estimates for odd.
+# #copy odd2.c to rcsf.inp
+# path_to_copy = os.path.join(testdir,'odd2.c')
+# target_path = os.path.join(testdir,'rcsf.inp')
+# shutil.copyfile(path_to_copy,target_path)
 
-init_est_odd = [Rangular(), #Get initial estimates of wave functions
-        Rwfnestimate(orbdict = None, fallback='Thomas-Fermi'), 
-        Rmcdhf([[1],[1],[5]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'), 
-        # Perform self-consistent field calculations
-        #output =  outodd_rmcdhf_initial 
-        Rsave('odd2.c')]
-[cmd.execute(workdir = testdir) for cmd in init_est_odd]
+# init_est_odd = [Rangular(), #Get initial estimates of wave functions
+#         Rwfnestimate(orbdict = None, fallback='Thomas-Fermi'), 
+#         Rmcdhf([[1],[1],[5]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'), 
+#         # Perform self-consistent field calculations
+#         #output =  outodd_rmcdhf_initial 
+#         Rsave('odd2.c')]
+# [cmd.execute(workdir = testdir) for cmd in init_est_odd]
 
-#For n=2, Get initial estimates for even
-#copy even2.c to rcsf.inp
-path_to_copy = os.path.join(testdir,'even2.c')
-target_path = os.path.join(testdir,'rcsf.inp')
-shutil.copyfile(path_to_copy,target_path)
+# #For n=2, Get initial estimates for even
+# #copy even2.c to rcsf.inp
+# path_to_copy = os.path.join(testdir,'even2.c')
+# target_path = os.path.join(testdir,'rcsf.inp')
+# shutil.copyfile(path_to_copy,target_path)
 
-inti_est_even = [Rangular(), 
-        Rwfnestimate(orbdict = None, fallback='Thomas-Fermi'),
-        # Get initial estimates of wave functions
-        Rmcdhf([[1,2,3],[1,2,3],[1,2], [5]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'), 
-        # Perform self-consistent field calculations
-        # output = outeven_rmcdhf_initial
-        Rsave('even2.c')]
-[cmd.execute(workdir = testdir) for cmd in inti_est_even]
+# inti_est_even = [Rangular(), 
+#         Rwfnestimate(orbdict = None, fallback='Thomas-Fermi'),
+#         # Get initial estimates of wave functions
+#         Rmcdhf([[1,2,3],[1,2,3],[1,2], [5]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'), 
+#         # Perform self-consistent field calculations
+#         # output = outeven_rmcdhf_initial
+#         Rsave('even2.c')]
+# [cmd.execute(workdir = testdir) for cmd in inti_est_even]
 
 #4. rmcdhf and rci calculation
 #Get results for odd n=3,4,5,6
@@ -123,17 +123,17 @@ for n in range(3,6):
                         include_sms = False,
                         est_self_energy= True,
                         largest_n = 4,
-                        asfidx = [[1],[1],[5]]) 
+                        asfidx = [[1],[1]]) 
                         #output = outodd_rci
-                [cmd.execute(workdir = testdir) for cmd in BC_odd]
+                BC_odd.execute(workdir=testdir)
         else:
                 continue
         # transform to LSJ-coupling
         Transform_LSJ_odd = JJtoLSJ(calc_name= f'oddCI{n}',use_ci = True, unique = True)
         #should it be f'oddCI{n}' or 'oddCI'
-        [cmd.execute(workdir = testdir) for cmd in Transform_LSJ_odd]
+        Transform_LSJ_odd.execute(workdir = testdir)
 
-#Get results for even n=3,4,5,6
+# Get results for even n=3,4,5,6
 for n in range(3,6):
         #cp even${n}.c rcsf.inp
         path_to_copy_5 = os.path.join(testdir,f'even{n}.c') #how to represent multiple files with differing numbers?
@@ -176,21 +176,21 @@ for n in range(3,6):
                         largest_n = 4,
                         asfidx = [[1,2,3],[1,2,3],[1,2],[5]])
                         #output = outeven_rci
-                [cmd.execute(workdir = testdir) for cmd in BC_even]
+                BC_even.execute(workdir=testdir)
         else: 
                 continue
         # transform to LSJ-coupling
         Transform_LSJ_even = JJtoLSJ(calc_name= f'evenCI{n}',use_ci = True, unique = True)
         #should it be f'evenCI{n}' or 'evenCI'
-        [cmd.execute(workdir = testdir) for cmd in Transform_LSJ_even]
+        Transform_LSJ_even.execute(workdir = testdir) 
 
 # 5. Transition Calculation
 # Perform transition calculation for the n=6 CI results
-n = 6
-BT = [Rbiotransform(use_ci=True,calc_name_initial = 'oddCI',calc_name_final = 'evenCI', transform_all = True), 
+# n = 6
+BT = [Rbiotransform(use_ci=True,calc_name_initial = 'oddCI6',calc_name_final = 'evenCI6', transform_all = True), 
         #should it be f'oddCI{n}' or 'oddCI', #should it be f'evenCI{n}' or 'evenCI'
         #First the biorthonormal transformations
-        Rtransition(use_ci=True,calc_name_initial = 'oddCI',calc_name_final = 'evenCI',transition_spec = ['E1'])]
+        Rtransition(use_ci=True,calc_name_initial = 'oddCI6',calc_name_final = 'evenCI6',transition_spec = ['E1'])]
         #should it be f'oddCI{n}' or 'oddCI', #should it be f'evenCI{n}' or 'evenCI'
         #Then the transition calculations
 [cmd.execute(workdir = testdir) for cmd in BT]
