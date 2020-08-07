@@ -23,7 +23,7 @@ def estimate_wavefunctions(calc_dir,previous_rwfn = None):
 def run_hartree_fock_save(calc_dir,grid = None,orbs = ['*'],specorbs = ['*'],integration_method = None,calc_name = None):
     out = Rmcdhf(asfidx = [[1],[1],[1],[1,2],[1,2],[1],[1]],orbs = orbs, specorbs = specorbs, runs = 20000, weighting_method = 'Standard',integration_method = integration_method).execute(workdir = calc_dir)
     Rsave(calc_name).execute(workdir = calc_dir)
-    return os.path.join(calc_dir,calc_name) + '.w'
+    return calc_name + '.w'
     #else:
         #return out
 
@@ -49,26 +49,51 @@ angular_integration(testdir)
 
 principle_quantum = [1, 2, 3, 4, 5, 6 ,7]
 
-'''
-orb_list = [['1s'],         #list of orbitals to be passed into each n iteration
-['1s','2s*','2p*'],
-['1s','2s*','2p*','3s','3p*','3d*'],
-['1s','2s*','2p*','3s','3p*','3d*','4s','4p*','4d*', '4f*'],
-['1s','2s*','2p*','3s','3p*','3d*','4s','4p*','4d*', '4f*', '5s','5p*','5d*','5f*'],
-['1s','2s*','2p*','3s','3p*','3d*','4s','4p*','4d*', '4f*', '5s','5p*','5d*','5f*', '6s', '6p*','6d*'],
-['1s','2s*','2p*','3s','3p*','3d*','4s','4p*','4d*', '4f*', '5s','5p*','5d*','5f*', '6s', '6p*','6d*','7s','7p*']]
 
-old_rwfn = None
+orb_config_dict = {'first':['1*'],      #dictionary with key=calcdir and value=orbital because these are the two variables in the loop
+'second':['1*', '2*'], 
+'third':['1*', '2*', '3*'], 
+'fourth':['1*', '2*', '3*', '4*'], 
+'fifth':['1*', '2*', '3*', '4*', '5*'], 
+'sixth':['1*', '2*', '3*', '4*','5*','6s*','6p*','6d*'],
+'seventh':['1*', '2*', '3*', '4*','5*','6s*','6p*','6d*','7s*','7p*']}
 
-for orb_config in orb_list:
-    print("Running ", *(orb_config))
-    estimate_wavefunctions(testdir,old_rwfn)
-    old_rwfn = run_hartree_fock_save(testdir, grid=None,orbs=orb_config, specorbs = ['*'],integration_method = None,calc_name = None)  
+old_rwfn = None     #created a loop that takes the corresponding dictionary items and keeps revising each configuration
+for config_item in orb_config_dict:
+    print("key=",config_item,"value=",orb_config_dict[config_item])
+    estimate_wavefunctions(testdir, old_rwfn)
+    print("old_rwfn=",old_rwfn)
+    old_rwfn = run_hartree_fock_save(testdir, grid=None,orbs=orb_config_dict[config_item], specorbs = ['*'],integration_method = 3,calc_name = config_item)
 
-'''  
-old_rwfn = None
-orb_list = [['1*'],['1*','2*']]
+
+#ran each orbital manually first, will remove later
+''' 
 estimate_wavefunctions(testdir,old_rwfn)
-old_rwfn = run_hartree_fock_save(testdir, grid=None,orbs=orb_list[0], specorbs = ['*'],integration_method = None,calc_name = 'first')
-print(old_rwfn)
-print(testdir)
+old_rwfn = run_hartree_fock_save(testdir, grid=None,orbs=orb_list[0], specorbs = ['*'],integration_method = 3,calc_name = 'first')
+print("old_rwfn=",old_rwfn)
+print("testdir = ",testdir)
+
+estimate_wavefunctions(testdir,old_rwfn)
+old_rwfn = run_hartree_fock_save(testdir, grid=None,orbs=orb_list[1], specorbs = ['*'],integration_method = 3,calc_name = 'second')
+print("old_rwfn=",old_rwfn)
+
+estimate_wavefunctions(testdir,old_rwfn)
+old_rwfn = run_hartree_fock_save(testdir, grid=None,orbs=orb_list[2], specorbs = ['*'],integration_method = 3,calc_name = 'third')
+print("old_rwfn=",old_rwfn)
+
+estimate_wavefunctions(testdir,old_rwfn)
+old_rwfn = run_hartree_fock_save(testdir, grid=None,orbs=orb_list[3], specorbs = ['*'],integration_method = 3,calc_name = 'fourth')
+print("old_rwfn=",old_rwfn)
+
+estimate_wavefunctions(testdir,old_rwfn)
+old_rwfn = run_hartree_fock_save(testdir, grid=None,orbs=orb_list[4], specorbs = ['*'],integration_method = 3,calc_name = 'fifth')
+print("old_rwfn=",old_rwfn)
+
+estimate_wavefunctions(testdir,old_rwfn)
+old_rwfn = run_hartree_fock_save(testdir, grid=None,orbs=orb_list[5], specorbs = ['*'],integration_method = 3,calc_name = 'sixth')
+print("old_rwfn=",old_rwfn)
+
+estimate_wavefunctions(testdir,old_rwfn)
+old_rwfn = run_hartree_fock_save(testdir, grid=None,orbs=orb_list[6], specorbs = ['*'],integration_method = 3,calc_name = 'seventh')
+print("old_rwfn=",old_rwfn)
+'''
