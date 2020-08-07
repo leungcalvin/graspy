@@ -95,17 +95,12 @@ for n in range(3,6):
                 # Get angular data
                 Rwfnestimate(orbdict = {'*':f'odd{m}.w'},fallback = 'Thomas-Fermi'), #how to represent multiple files with differing numbers?
                 # Get initial estimates of wave functions
-                Rmcdhf([[1],[1],[5]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'), 
+                Rmcdhf(asfidx = [[1],[1],[5]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'), 
                 #output = outodd_rmcdhf_${n}
-                #how to represent ${n}* ?
                 # Perform self-consistent field calculations
                 Rsave(f'odd{n}')] #rsave odd${n}
                 #should it be f'odd{n}' or 'odd'
         [cmd.execute(workdir = testdir) for cmd in calculations_odd]
-        # transform to LSJ-coupling
-        # LSJ_coupling_odd = JJtoLSJ(calc_name= f'odd{n}',use_ci = True, unique = True)
-        # #should it be f'odd{n}' or 'odd'
-        # [cmd.execute(workdir = testdir) for cmd in LSJ_coupling_odd]
         n += 1
 
         ## Perform Breit-correction using RCI for n=6. First copy to other file names
@@ -128,7 +123,7 @@ for n in range(3,6):
                         include_sms = False,
                         est_self_energy= True,
                         largest_n = 4,
-                        asfidx = [[1],[1]]) 
+                        asfidx = [[1],[1],[5]]) 
                         #output = outodd_rci
                 [cmd.execute(workdir = testdir) for cmd in BC_odd]
         else:
@@ -151,17 +146,12 @@ for n in range(3,6):
                 # Get angular data
                 Rwfnestimate(orbdict = {'*':f'even{m}.w'},fallback = 'Thomas-Fermi'), #how to represent multiple files with differing numbers? 
                 # Get initial estimates of wave functions
-                Rmcdhf([[1,2,3],[1,2,3],[1,2],[5]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'), 
+                Rmcdhf(asfidx = [[1,2,3],[1,2,3],[1,2],[5]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'), 
                 # Perform self-consistent field calculations
                 #Output = outodd_rmcdhf_${n}
-                #how to add: ${n}*
                 Rsave(f'even{n}')]
                 #should it be f'even{n}' or 'even'
         [cmd.execute(workdir = testdir) for cmd in calculations_even]
-        # transform to LSJ-coupling        
-        # LSJ_coupling_even = JJtoLSJ(calc_name= f'even{n}',use_ci = True, unique = True)
-        # #should it be f'even{n}' or 'even'
-        # [cmd.execute(workdir = testdir) for cmd in LSJ_coupling_even]
         n += 1
 
         # Perform Breit-correction using RCI for n=6
@@ -184,7 +174,7 @@ for n in range(3,6):
                         include_sms = False,
                         est_self_energy= True,
                         largest_n = 4,
-                        asfidx = [[1,2,3],[1,2,3],[1,2]])
+                        asfidx = [[1,2,3],[1,2,3],[1,2],[5]])
                         #output = outeven_rci
                 [cmd.execute(workdir = testdir) for cmd in BC_even]
         else: 
@@ -202,5 +192,5 @@ BT = [Rbiotransform(use_ci=True,calc_name_initial = 'oddCI',calc_name_final = 'e
         #First the biorthonormal transformations
         Rtransition(use_ci=True,calc_name_initial = 'oddCI',calc_name_final = 'evenCI',transition_spec = ['E1'])]
         #should it be f'oddCI{n}' or 'oddCI', #should it be f'evenCI{n}' or 'evenCI'
-        # Then the transition calculations
+        #Then the transition calculations
 [cmd.execute(workdir = testdir) for cmd in BT]
