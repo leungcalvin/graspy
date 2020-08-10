@@ -18,7 +18,7 @@ def str_to_float(string):
 def float_to_str(number):
     return "{:.9e}".format(number).replace('e','D')
 
-def initialize(workdir,clist=None):
+def initialize(workdir,clist=None,rm = False):
     """
     Makes working directory and populates it with an orbital ordering by writing a workdir/clist.ref file
     Inputs:
@@ -30,6 +30,10 @@ def initialize(workdir,clist=None):
     if not os.path.exists(workdir):
         os.makedirs(workdir)
         #print(f'Made path to: {workdir}')
+    if rm:
+        for old_file in os.scandir(workdir):
+            print(f'Removing old file: {old_file}')
+            os.unlink(old_file.path)
     if clist is not None:
         with open(os.path.join(workdir,'clist.ref'),'w+') as clistfile:
             # clistfile.write([str(''.join(string+'\n')) for string in clist])
@@ -81,7 +85,9 @@ class Routine(object):
                 encoding='utf8')
         missing_files = [outp for outp in self.outputs if not path.exists(path.join(workdir,outp))]
         if len(missing_files) > 0:
-                warnings.warn(f'{self.name} failed to produce {missing_files} in the working directory. This was the command-line input to {self.name}:{self.params}')
+            warnings.warn(f'{self.name} failed to produce {missing_files} in {workdir}. This was the command-line input to {self.name}:{self.params}')
+        else:
+            print(f'{self.name} successfully produced {self.outputs} in {workdir}! This was the command-line input to {self.name}:{self.params}')
         # remove temp file
         with open(os.path.join(workdir,'readout.temp')) as printout:
             self.printout = printout.read().splitlines()
@@ -421,8 +427,43 @@ class Rmcdhf(Routine):
                          inputs = ['isodata','rcsf.inp','rwfn.inp'],
                          outputs = ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log'],
                          params=params)
-
     def readout(self):
+        try:
+            last_index = self.printout.index(" RMCDHF: Execution complete.")
+        except ValueError:
+            input('Yikes. RMCDHF did not converge.')
+        start_str = "Subshell    Energy    Method   P0    consistency  Norm-1  factor  JP MTP INV NNP"
+        #every time 'Subshell ...' (the headers of the table) is found, a table follows
+        start_candidates = [i for i,line in enumerate(self.printout) if line == start_str]
+        print(start_candidates)
+
+        end_str = "Average energy"
+        end_candidates = np.array([i for i,line in enumerate(self.printout) if end_str in line])
+        print(end_candidates)
+        correct_end_line = end_candidates[end_candidates > start_candidates[-1]][0]
+
+        table = self.printout[start_candidates[-1]+1:correct_end_line-1]
+        #prints the contents of the table
+        print(table)
+        table = filter(None, table)
+        print(table)
+        #removes the line where None is returned
+        table_list = [line.split() for line in table]
+        print(table)
+        #splits the list of strings of the table into seperate lines
+        # print(table_list)
+        for line in table_list:
+            if len(line) < 11:
+                line.extend((11-len(line))*[''])
+        df = pd.DataFrame(table_list, columns= ['Subshell', 'Energy','Method','P0','Self-consistency','Norm-1','Damping factor','JP','MTP', "INV", 'NNP'], dtype=float)
+        #returns the table, and assigns each column with a header
+        # Finally, converts improperly-formatted columns to usable data types.
+        for col in ['Energy','P0','Self-consistency', 'Norm-1']:
+            df[col] = df[col].apply(str_to_float)
+        return df
+
+
+    def readout_old(self):
         last_index = self.printout.index(" RMCDHF: Execution complete.")
         #index of last element in function readout
         # print(last_index)
@@ -586,7 +627,9 @@ class Rmixextract(CSFRoutine):
 class JJtoLSJ(Routine):
     def __init__(self,calc_name,use_ci,unique):
         params = [calc_name,booltoyesno(use_ci),booltoyesno(unique),'y'] #TODO: implement non-default settings
-        inputs = [f'{calc_name}.c',f'{calc_name}.cm']
+        inputs = [f'{calc_name}.c']
+        if use_ci:
+            inputs.append(f'{calc_name}.cm') # only need this if using a CI calculation
         outputs= [f'{calc_name}.lsj.lbl'] # and maybe some others
         super().__init__(name = 'jj2lsj',
                     inputs = inputs,
