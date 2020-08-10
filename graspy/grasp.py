@@ -8,16 +8,17 @@ from os import path
 import warnings
 
 def str_to_float(string):
-    parts = string.split('D')
-    if len(parts) == 1:
-        return float(parts[0])
-    if len(parts) == 2:
-        return float(parts[0]) * 10**(int(parts[1]))
+    if type(string) is not float:
+        parts = string.split('D')
+        if len(parts) == 1:
+            return float(parts[0])
+        if len(parts) == 2:
+            return float(parts[0]) * 10**(int(parts[1]))
 
 def float_to_str(number):
     return "{:.9e}".format(number).replace('e','D')
 
-def initialize(workdir,clist=None):
+def initialize(workdir,clist=None,rm = False):
     """
     Makes working directory and populates it with an orbital ordering by writing a workdir/clist.ref file
     Inputs:
@@ -28,6 +29,11 @@ def initialize(workdir,clist=None):
     """
     if not os.path.exists(workdir):
         os.makedirs(workdir)
+        #print(f'Made path to: {workdir}')
+    if rm:
+        for old_file in os.scandir(workdir):
+            print(f'Removing old file: {old_file}')
+            os.unlink(old_file.path)
     if clist is not None:
         with open(os.path.join(workdir,'clist.ref'),'w+') as clistfile:
             # clistfile.write([str(''.join(string+'\n')) for string in clist])
@@ -46,7 +52,7 @@ def checkSmart(abspath):
     else:
         root,ext=path.splitext(abspath)
         if path.exists(root+'.out'):
-            print(f'Copying {root}.out -> {root}.inp')
+            #print(f'Copying {root}.out -> {root}.inp')
             os.rename(root+'.out',root+'.inp')
             return True
         else:
@@ -57,9 +63,9 @@ class Routine(object):
         self.name = name
         self.inputs=inputs
         self.outputs=outputs
-        print(f'{name}: {params}')
-        print(f'{name}: {inputs}')
-        print(f'{name}: {outputs}')
+        #print(f'{name}: {params}')
+        #print(f'{name}: {inputs}')
+        #print(f'{name}: {outputs}')
         self.params=params
         self.hash=hash(self)
 
@@ -79,7 +85,9 @@ class Routine(object):
                 encoding='utf8')
         missing_files = [outp for outp in self.outputs if not path.exists(path.join(workdir,outp))]
         if len(missing_files) > 0:
-                warnings.warn(f'{self.name} failed to produce {missing_files} in the working directory. This was the command-line input to {self.name}:{self.params}')
+            warnings.warn(f'{self.name} failed to produce {missing_files} in {workdir}. This was the command-line input to {self.name}:{self.params}')
+        else:
+            print(f'{self.name} successfully produced {self.outputs} in {workdir}! This was the command-line input to {self.name}:{self.params}')
         # remove temp file
         with open(os.path.join(workdir,'readout.temp')) as printout:
             self.printout = printout.read().splitlines()
@@ -90,13 +98,13 @@ class Routine(object):
     def readout(self):
         # Reads off the raw output of the shell command by default, meant to be overloaded
         # Overload this with a function that takes in self.printout and returns something useful to the computation
-        print('superclass method called')
+        #print('superclass method called')
         return self.printout
 
 class CSFRoutine(Routine):
     """ A CSFRoutine is any GRASP routine that produces a CSF file as rcsf.out. Since other routines need to read from places like rcsf.inp and rcsfmr.inp, we'll overload the execute() routine to include some file management. We need to make sure that we have a self.write_csf attribute."""
     def execute(self,workdir):
-        print('Calling CSFRoutine execute with directory mgmt!')
+        #print('Calling CSFRoutine execute with directory mgmt!')
         assert hasattr(self,'write_csf'),f'{self.name} has no csf file defined!'
         super().execute(workdir)
         # if we want to keep a log file somewhere, move it over.
@@ -143,13 +151,13 @@ coredict = {'None':0,'He':1,'Ne':2,'Ar':3,'Kr':4,'Xe':5}
 orderingdict = {'Default':'*','Reverse':'r','Symmetry':'s','User specified':'u'}
 
 class Rcsfgenerate(Routine):
-    def __init__(self,core,csflist,activeset,jlower,jhigher,exc,ordering='Default', write_csf = 'rcsf.out'):
+    def __init__(self,core,csflist,active_set,jlower,jhigher,exc,ordering='Default', write_csf = 'rcsf.out'):
         """
         Inputs:
         -------
         core (str): 'None','He','Ne','Ar','Kr','Xe', or 'Rn'
         csflist ((list) of str(s)): electron configurations
-        activeset (list of ints): highest orbital numbers given as a list of quantum numbers in the order s,p,d,f,g,h,etc. So, [4,4,3] means the CSF expansion is truncated at 4s,4p,3d.
+        active_set (list of ints): highest orbital numbers given as a list of quantum numbers in the order s,p,d,f,g,h,etc. So, [4,4,3] means the CSF expansion is truncated at 4s,4p,3d.
         jlower (int): minimum 2*J value of the atom
         jhigher (int): maximum 2*J value of the atom
         exc (int): number of excitations from each config in multireference
@@ -162,7 +170,7 @@ class Rcsfgenerate(Routine):
             csflist = [csflist]
         self.header = [orderingdict[ordering],str(coredict[core])]
         self.subparams = csflist + ['*']
-        self.subparams.append(','.join([str(n)+l for n,l in zip(activeset,['s','p','d','f','g','h','i','l'])]))
+        self.subparams.append(','.join([str(n)+l for n,l in zip(active_set,['s','p','d','f','g','h','i','l'])]))
         self.subparams.append(f'{jlower},{jhigher}')
         self.subparams.append(str(exc))
         self.write_csf = write_csf
@@ -171,7 +179,7 @@ class Rcsfgenerate(Routine):
 
         #params.extend(csflist)
         #params.append('*') # end the CSF list
-        #params.append(','.join([str(n)+l for n,l in zip(activeset,['s','p','d','f','g','h','i','l'])]))
+        #params.append(','.join([str(n)+l for n,l in zip(active_set,['s','p','d','f','g','h','i','l'])]))
         #params.append(f'{jlower},{jhigher}')
         #params.append(str(exc))
         #params.append('n') # terminate input
@@ -213,20 +221,20 @@ class Rcsfgenerate(Routine):
 list_to_designation = lambda orblist: ','.join([str(n)+l for n,l in zip(orblist,['s','p','d','f','g','h','i','l'])])
 
 class Rcsfsplit(Routine):
-    def __init__(self,calcname,nsplit,splitorbs,write_csf = 'rcsf.inp'):
+    def __init__(self,calc_name,nsplit,splitorbs,write_csf = 'rcsf.inp'):
         if type(splitorbs[0]) is int: # if splits are specified by maximum principal quantum number value
             splitnames = [str(n) for n in splitorbs]
             splitorbs = [[n]*n for n in splitorbs]
-            print(splitnames,'splitnames')
+            #print(splitnames,'splitnames')
         else: # generate default splitnames
             splitnames = [str(n) for n in range(nsplit)]
-        params = [calcname,str(nsplit)]
+        params = [calc_name,str(nsplit)]
         for splitname,splitorb in zip(splitnames,splitorbs):
             params.append(list_to_designation(splitorb))
             params.append(splitname)
         super().__init__(name=f'rcsfsplit',
-                         inputs = [f'{calcname}.c'],
-                         outputs= [f'{calcname}{ext}.c' for ext in splitnames],
+                         inputs = [f'{calc_name}.c'],
+                         outputs= [f'{calc_name}{ext}.c' for ext in splitnames],
                          params = params)
 
 
@@ -268,10 +276,10 @@ class Rcsfzerofirst(CSFRoutine):
                        params=[small_exp,big_exp])
 
 class Rmixaccumulate(Routine):
-    def __init__(self,calcname,useCI,truncate_eps,write_csf = 'rcsf.out'):
+    def __init__(self,calc_name,use_ci,truncate_eps,write_csf = 'rcsf.out'):
         self.write_csf = write_csf
-        inputs = [f'{calcname}.cm',f'{calcname}.c']
-        params = [calcname,booltoyesno(useCI),str(truncate_eps),'y'] # always sort by mixing coeff
+        inputs = [f'{calc_name}.cm',f'{calc_name}.c']
+        params = [calc_name,booltoyesno(use_ci),str(truncate_eps),'y'] # always sort by mixing coeff
 
         super().__init__(name='rmixaccumulate',
                          inputs=inputs,
@@ -292,7 +300,7 @@ class Rmixaccumulate(Routine):
     def readout(self):
         idx = self.printout.index('         block        ncf') + 1 # start reading iccut on the next line
         iccuttable = pd.DataFrame([line.split() for line in self.printout[idx:]],dtype=float)
-        print('called subclass method')
+        #print('called subclass method')
         return [int(val) for val in iccuttable.values[:,1]] #a value for each block
 
 class Rangular(Routine):
@@ -419,20 +427,55 @@ class Rmcdhf(Routine):
                          inputs = ['isodata','rcsf.inp','rwfn.inp'],
                          outputs = ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log'],
                          params=params)
-        
     def readout(self):
+        try:
+            last_index = self.printout.index(" RMCDHF: Execution complete.")
+        except ValueError:
+            input('Yikes. RMCDHF did not converge.')
+        start_str = "Subshell    Energy    Method   P0    consistency  Norm-1  factor  JP MTP INV NNP"
+        #every time 'Subshell ...' (the headers of the table) is found, a table follows
+        start_candidates = [i for i,line in enumerate(self.printout) if line == start_str]
+        print(start_candidates)
+
+        end_str = "Average energy"
+        end_candidates = np.array([i for i,line in enumerate(self.printout) if end_str in line])
+        print(end_candidates)
+        correct_end_line = end_candidates[end_candidates > start_candidates[-1]][0]
+
+        table = self.printout[start_candidates[-1]+1:correct_end_line-1]
+        #prints the contents of the table
+        print(table)
+        table = filter(None, table)
+        print(table)
+        #removes the line where None is returned
+        table_list = [line.split() for line in table]
+        print(table)
+        #splits the list of strings of the table into seperate lines
+        # print(table_list)
+        for line in table_list:
+            if len(line) < 11:
+                line.extend((11-len(line))*[''])
+        df = pd.DataFrame(table_list, columns= ['Subshell', 'Energy','Method','P0','Self-consistency','Norm-1','Damping factor','JP','MTP', "INV", 'NNP'], dtype=float)
+        #returns the table, and assigns each column with a header
+        # Finally, converts improperly-formatted columns to usable data types.
+        for col in ['Energy','P0','Self-consistency', 'Norm-1']:
+            df[col] = df[col].apply(str_to_float)
+        return df
+
+
+    def readout_old(self):
         last_index = self.printout.index(" RMCDHF: Execution complete.")
         #index of last element in function readout
         # print(last_index)
         last_candidates_index = []
-        #empty list where the index number of where 'Average Energy' is found 
+        #empty list where the index number of where 'Average Energy' is found
         last_candidates_index_1 = []
         #empty list where the index number of potential ending of the last table is stored
         start_candidates_index = []
         #empty list where the index number of potential starting of the last table is stored
 
         start_of_table = "Subshell    Energy    Method   P0    consistency  Norm-1  factor  JP MTP INV NNP"
-        #every time 'Subshell ...' (the headers of the table) is found, a table follows 
+        #every time 'Subshell ...' (the headers of the table) is found, a table follows
         start_candidates = [line.find(start_of_table) for line in self.printout]
         #searches for 'Subshell ...' in the list of strings made by the readout function
         #creates a list, when start_of_table is found, 0 is returned, otherwise -1 is returned for every index in list of strings
@@ -456,7 +499,7 @@ class Rmcdhf(Routine):
         # print(table_index)
 
         end_of_table = " Average energy = "
-         #every time 'Average energy' is found, the table has ended before that string 
+         #every time 'Average energy' is found, the table has ended before that string
         end_candidates = [line.find(end_of_table) for line in self.printout]
         #searches for 'Average energy' in the list of strings made by the readout function
         #creates a list, when end_of_table is found, 0 is returned, otherwise -1 is returned for every index in list of strings
@@ -482,17 +525,17 @@ class Rmcdhf(Routine):
             if end_candidates[i] == -1:
                 #if the element in the list with index number i has the value 0
                 end_index_1 = i
-                #stores the index number where -1 is found 
+                #stores the index number where -1 is found
                 last_candidates_index_1.append(end_index_1)
                 #appends the number into the list last_candidates_index_1
-            else: 
+            else:
                 continue
             i += 1
         # print(last_candidates_index_1)
-        end_table = int(last_candidates_index_1[-1]) 
+        end_table = int(last_candidates_index_1[-1])
         #the last index is where the table ends, as the index number is less than index number of where 'Average energy' is last found
         # print(end_table)
-        
+
         table = self.printout[table_index:end_table]
         #prints the contents of the table
         # print(table)
@@ -506,82 +549,88 @@ class Rmcdhf(Routine):
                 line.extend((11-len(line))*[''])
         df = pd.DataFrame(table_list, columns= ['Subshell', 'Energy','Method','P0','Self-consistency','Norm-1','Damping factor','JP','MTP', "INV", 'NNP'], dtype=float)
         #returns the table, and assigns each column with a header
+        # Finally, converts improperly-formatted columns to usable data types.
+        for col in ['Energy','P0','Self-consistency', 'Norm-1']:
+            df[col] = df[col].apply(str_to_float)
         return df
 
 class Rsave(Routine):
-    def __init__(self,calcname):
+    def __init__(self,calc_name):
         """
         Inputs:
         -------
         name the calculation without a file extension.
         ------
         """
-        super().__init__(name=f'rsave {calcname}',
+        super().__init__(name=f'rsave {calc_name}',
                          inputs = [],# ['rmix.out','rwfn.out','rmcdhf.sum','rmcdhf.log']; rsave will succeed even if some of these are missing
-                         outputs= [f'{calcname}.{ext}' for ext in ['c','m','w','sum','log']],
+                         outputs= [f'{calc_name}.{ext}' for ext in ['c','m','w','sum','log']],
                          params = [])
 
 class Rasfsplit(Routine):
-    def __init__(self,calcname,something):
+    def __init__(self,calc_name,something):
         """
         Inputs:
         -------
-        calcname: name of the calculation without a file extension.
+        calc_name: name of the calculation without a file extension.
         same (bool): whether csfs are generated from same set of orbitals. Default yes.
 
         ------
         """
         super().__init__(name=f'rasfsplit',
-                         inputs = [f'{calcname}.c'],
+                         inputs = [f'{calc_name}.c'],
                          outputs= [],
                          params = [booltoyesno(same)])
 
 class Rci(Routine):
-    def __init__(self,calcname,includetransverse,modifyfreq,scalefactor,includevacpol,includenms,includesms,estselfenergy,largestn,asfidx):
+    def __init__(self,calc_name,include_transverse,modify_freq,scale_factor,include_vacpol,include_nms,include_sms,est_self_energy,largest_n,asfidx):
         """
         Inputs:
         -------
-        calcname (str): provide the name of a RMCDHF calculation to use as the basis for an RCI calculation.
-        includetransverse (bool)
-        modifyfreq (bool)
-        scalefactor (str for now): '1.d-6' by default
-        includevacpol,includenms,includesms,estselfenergy: (bool)
-        largestn (int <= 8)
+        calc_name (str): provide the name of a RMCDHF calculation to use as the basis for an RCI calculation.
+        include_transverse (bool)
+        modify_freq (bool)
+        scale_factor (str for now): '1.d-6' by default
+        include_vacpol,include_nms,include_sms,est_self_energy: (bool)
+        largest_n (int <= 8)
         asfidx (list of list of ints): see rmcdhf
         ------
         """
-        params = ['y',calcname]
-        params.extend([booltoyesno(param) for param in [includetransverse,modifyfreq]])
-        if includetransverse:
-            params.append(str(scalefactor))
-        params.extend([booltoyesno(param) for param in [includevacpol,includenms,includesms,estselfenergy]])
-        if estselfenergy:
-            params.append(str(largestn))
+        params = ['y',calc_name]
+        params.extend([booltoyesno(param) for param in [include_transverse,modify_freq]])
+        if include_transverse:
+            params.append(str(scale_factor))
+        params.extend([booltoyesno(param) for param in [include_vacpol,include_nms,include_sms,est_self_energy]])
+        if est_self_energy:
+            params.append(str(largest_n))
         params.extend( ','.join(str(level) for level in levels) for levels in asfidx)
         super().__init__(name = 'rci',
-                         inputs = [f'{calcname}.c',f'{calcname}.w'],
-                         outputs=[f'{calcname}.cm',f'{calcname}.csum',f'{calcname}.clog','rci.res'],
+                         inputs = [f'{calc_name}.c',f'{calc_name}.w'],
+                         outputs=[f'{calc_name}.cm',f'{calc_name}.csum',f'{calc_name}.clog','rci.res'],
                          params = params)
 
 
 
-class Rmixextract(Routine):
-    def __init__(self,calcname,useCI,tolerance,sort):
-        params = [calcname]
-        params.append(booltoyesno(useCI))
+class Rmixextract(CSFRoutine):
+    def __init__(self,calc_name,use_ci,tolerance,sort,write_csf):
+        self.write_csf = write_csf
+        params = [calc_name]
+        params.append(booltoyesno(use_ci))
         params.append(str(tolerance))
         params.append(booltoyesno(sort))
-        print(f'{calcname}.cm')
+        #print(f'{calc_name}.cm')
         super().__init__(name = 'rmixextract',
-                    inputs = [f'{calcname}.cm'],
+                    inputs = [f'{calc_name}.cm'],
                     outputs= ['rcsf.out'], #really?? shouldn't grasp name it something else
                     params = params)
 
 class JJtoLSJ(Routine):
-    def __init__(self,calcname,useCI,unique):
-        params = [calcname,booltoyesno(useCI),booltoyesno(unique),'y'] #TODO: implement non-default settings
-        inputs = [f'{calcname}.c',f'{calcname}.cm']
-        outputs= [f'{calcname}.lsj.lbl'] # and maybe some others
+    def __init__(self,calc_name,use_ci,unique):
+        params = [calc_name,booltoyesno(use_ci),booltoyesno(unique),'y'] #TODO: implement non-default settings
+        inputs = [f'{calc_name}.c']
+        if use_ci:
+            inputs.append(f'{calc_name}.cm') # only need this if using a CI calculation
+        outputs= [f'{calc_name}.lsj.lbl'] # and maybe some others
         super().__init__(name = 'jj2lsj',
                     inputs = inputs,
                     outputs= outputs,
@@ -592,7 +641,7 @@ class Rlevels(Routine):
         if type(files) is str:
             files = [files]
 
-        params = list(files).append('') #newline to terminate calcname input
+        params = files + [''] #newline to terminate calc_name input
         # TODO: implement multiple calculation results
         super().__init__(name = 'rlevels',
                     inputs = list(files),
@@ -603,60 +652,80 @@ class Rlevels(Routine):
         # reads off the energy levels into a table
         tableheader,start,end = np.where([line[0:2] == '--' for line in self.printout])[0]
         tableList = [line.split() for line in self.printout[start+1:end]]
-        print(tableList)
+        #print(tableList)
         for line in tableList:
             if len(line) < 8:
                 line.extend((8-len(line))*[''])
         df = pd.DataFrame(tableList,columns= ['Number','Position','J','Parity','Energy Total','Levels','Splitting','Configuration'],dtype=float)
+        for key in ['Number','Position','J','Energy Total', 'Levels','Splitting']:
+            df[key] = pd.to_numeric(df[key])
         return df
 
 class Rhfs(Routine):
-    def __init__(self,calcname,useCI):
+    def __init__(self,calc_name,use_ci):
         """
         Inputs:
-        calcname (str): name of calculation without file extension, e.g. 2p_3
-        useCI (bool) : use mixing coefficients from CI calculation?
+        calc_name (str): name of calculation without file extension, e.g. 2p_3
+        use_ci (bool) : use mixing coefficients from CI calculation?
         """
-        params = ['y',calcname,booltoyesno(useCI)] #TODO: implement non-default settings
-        inputs = ['isodata',f'{calcname}.w',f'{calcname}.c',f'{calcname}.cm']
-        outputs= [f'{calcname}.ch',f'{calcname}.choffd'] # and maybe some others
+        params = ['y',calc_name,booltoyesno(use_ci)] #TODO: implement non-default settings
+        inputs = ['isodata',f'{calc_name}.w',f'{calc_name}.c',f'{calc_name}.cm']
+        outputs= [f'{calc_name}.ch',f'{calc_name}.choffd'] # and maybe some others
         super().__init__(name = 'rhfs',
                     inputs = inputs,
                     outputs= outputs,
                     params = params)
 
 class Rbiotransform(Routine):
-    def __init__(self,useCI,calcname_initial,calcname_final,transform_all=True):
+    def __init__(self,use_ci,calc_name_initial,calc_name_final,transform_all=True):
         """
         Inputs:
-        useCI (bool) : use mixing coefficients from CI calculation?
-        calcname_initial (str): name of calculation without file extension, e.g. 2s_3
-        calcname_final (str): name of calculation without file extension, e.g. 2p_3. Order of initial/final doesn't matter.
+        use_ci (bool) : use mixing coefficients from CI calculation?
+        calc_name_initial (str): name of calculation without file extension, e.g. 2s_3
+        calc_name_final (str): name of calculation without file extension, e.g. 2p_3. Order of initial/final doesn't matter.
         transform_all (bool): Transform all J symmetries? Default True.
         """
-        params = ['y',booltoyesno(useCI),calcname_initial,calcname_final,booltoyesno(transform_all)] #TODO: implement non-default settings
-        if calcname_initial == calcname_final:
+        params = ['y',booltoyesno(use_ci),calc_name_initial,calc_name_final,booltoyesno(transform_all)] #TODO: implement non-default settings
+        if calc_name_initial == calc_name_final:
             params.insert(4,'y')
-        inputs = ['isodata',f'{calcname_initial}.c',f'{calcname_initial}.cm',f'{calcname_initial}.w',f'{calcname_final}.c',f'{calcname_final}.cm',f'{calcname_final}.w']
-        outputs = [f'{calcname_initial}.cbm',f'{calcname_initial}.bw',f'{calcname_initial}.TB',f'{calcname_final}.cbm',f'{calcname_final}.bw',f'{calcname_final}.TB']
+        inputs = ['isodata',f'{calc_name_initial}.c',f'{calc_name_initial}.cm',f'{calc_name_initial}.w',f'{calc_name_final}.c',f'{calc_name_final}.cm',f'{calc_name_final}.w']
+        outputs = [f'{calc_name_initial}.cbm',f'{calc_name_initial}.bw',f'{calc_name_initial}.TB',f'{calc_name_final}.cbm',f'{calc_name_final}.bw',f'{calc_name_final}.TB']
         super().__init__(name = 'rbiotransform',
                     inputs = inputs,
                     outputs= outputs,
                     params = params)
 class Rtransition(Routine):
-    def __init__(self,useCI,calcname_initial,calcname_final,transition_spec):
+    def __init__(self,use_ci,calc_name_initial,calc_name_final,transition_spec):
         """
         Inputs:
-        useCI (bool) : use mixing coefficients from CI calculation?
-        calcname_initial (str): name of calculation without file extension, e.g. 2s_3
-        calcname_final (str): name of calculation without file extension, e.g. 2p_3. Order of initial/final doesn't matter.
+        use_ci (bool) : use mixing coefficients from CI calculation?
+        calc_name_initial (str): name of calculation without file extension, e.g. 2s_3
+        calc_name_final (str): name of calculation without file extension, e.g. 2p_3. Order of initial/final doesn't matter.
         transition_spec (list of str): E.g. ['E1','M2']
         """
-        params = ['y',booltoyesno(useCI),calcname_initial,calcname_final, ','.join(transition_spec)] #TODO: implement non-default settings
-        inputs = ['isodata',f'{calcname_final}.w',f'{calcname_final}.bw',f'{calcname_final}.cbm',f'{calcname_initial}.w',f'{calcname_initial}.bw',f'{calcname_initial}.cbm',]
-        outputs= [f'{calcname_initial}.{calcname_final}.ct',f'{calcname_initial}.{calcname_final}.-1T']
+        params = ['y',booltoyesno(use_ci),calc_name_initial,calc_name_final, ','.join(transition_spec)] #TODO: implement non-default settings
+        inputs = ['isodata',f'{calc_name_final}.w',f'{calc_name_final}.bw',f'{calc_name_final}.cbm',f'{calc_name_initial}.w',f'{calc_name_initial}.bw',f'{calc_name_initial}.cbm',]
+        outputs= [f'{calc_name_initial}.{calc_name_final}.ct',f'{calc_name_initial}.{calc_name_final}.-1T']
         super().__init__(name = 'rtransition',
                     inputs = inputs,
                     outputs= outputs,
                     params = params)
 
+class Redf(Routine):
+    def __init__(self,use_ci,calc_name):
+        """
+        Inputs:
+        use_ci (bool) : use mixing coefficients from CI calculation?
+        calc_name (str): name of calculation without file extension, e.g. 2s_3
+        """
+        params = ['y',calc_name,booltoyesno(use_ci)] #TODO: implement non-default settings
+        inputs = ['isodata',f'{calc_name}.c',f'{calc_name}.w']
+        if params[2]:
+            inputs.append(f'{calc_name}.cm') # only needed in a CI calculation
+            outputs= [f'{calc_name}.ced']
+        else:
+            outputs= [f'{calc_name}.ed']
+        super().__init__(name = 'redf',
+                    inputs = inputs,
+                    outputs= outputs,
+                    params = params)
