@@ -147,7 +147,7 @@ class Rnucleus(Routine):
                          outputs = ['isodata'])
 
 
-coredict = {'None':0,'He':1,'Ne':2,'Ar':3,'Kr':4,'Xe':5}
+coredict = {'None':0,'He':1,'Ne':2,'Ar':3,'Kr':4,'Xe':5,'Rn':6}
 orderingdict = {'Default':'*','Reverse':'r','Symmetry':'s','User specified':'u'}
 
 class Rcsfgenerate(Routine):
@@ -435,21 +435,21 @@ class Rmcdhf(Routine):
         start_str = "Subshell    Energy    Method   P0    consistency  Norm-1  factor  JP MTP INV NNP"
         #every time 'Subshell ...' (the headers of the table) is found, a table follows
         start_candidates = [i for i,line in enumerate(self.printout) if line == start_str]
-        print(start_candidates)
+        #print(start_candidates)
 
         end_str = "Average energy"
         end_candidates = np.array([i for i,line in enumerate(self.printout) if end_str in line])
-        print(end_candidates)
+        #print(end_candidates)
         correct_end_line = end_candidates[end_candidates > start_candidates[-1]][0]
 
         table = self.printout[start_candidates[-1]+1:correct_end_line-1]
         #prints the contents of the table
-        print(table)
+        #print(table)
         table = filter(None, table)
-        print(table)
+        #print(table)
         #removes the line where None is returned
         table_list = [line.split() for line in table]
-        print(table)
+        #print(table)
         #splits the list of strings of the table into seperate lines
         # print(table_list)
         for line in table_list:
