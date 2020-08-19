@@ -25,6 +25,8 @@ even_exp = Rcsfgenerate(core='None',ordering = 'Default',
             active_set=[5,5,5,5,5],
             jlower=1,jhigher=1,exc=3, write_csf='even.c')
 
+even_exp.execute(workdir=testdir)
+
 even_exp_split = Rcsfsplit(calc_name = 'even',nsplit = 3, splitorbs = range(3,5))
 even_exp_split.execute(workdir = testdir)
 
@@ -32,6 +34,8 @@ odd_exp = Rcsfgenerate(core='None',ordering = 'Default',
             csflist=['1s(2,*)2p(1,*)'],
             active_set=[5,5,5,5,5],
             jlower=1,jhigher=3,exc=3, write_csf= 'odd.c')
+
+odd_exp.execute(workdir=testdir)
 
 odd_exp_split = Rcsfsplit(calc_name = 'odd',nsplit=3,splitorbs = range(3,5))
 odd_exp_split.execute(workdir = testdir)
@@ -62,7 +66,7 @@ shutil.copyfile(path_to_copy_2,target_path_2)
 
 
 # 4. Perform calculations for the even states
-for n in range(3,5):
+for n in range(3,6):
     # for z in range(6,12):
     # cp ../even${n}.c rcsf.inp
     path_to_copy = os.path.join(testdir,f'even{n}.c')
@@ -71,18 +75,18 @@ for n in range(3,5):
     k = n - 1
     print(k)
     calculations_even = [Rangular(), 
-            # Get angular data
-            Rwfnestimate(orbdict = {'*':f'even{k}.w'},fallback = 'Thomas-Fermi'), #how to represent multiple files with differing numbers? 
-            # Get initial estimates of wave functions
-            Rmcdhf(asfidx = [[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'), 
-            # Perform self-consistent field calculations
-            #Output = outodd_rmcdhf_${n}
-            Rsave(f'even{n}')]
+        # Get angular data
+        Rwfnestimate(orbdict = {'*':f'even{k}.w'},fallback = 'Thomas-Fermi'), #how to represent multiple files with differing numbers? 
+        # Get initial estimates of wave functions
+        Rmcdhf(asfidx = [[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'), 
+        # Perform self-consistent field calculations
+        #Output = outodd_rmcdhf_${n}
+        Rsave(f'even{n}')]
     [cmd.execute(workdir = testdir) for cmd in calculations_even]
     n += 1
 
 # 5. Perform calculations for the odd states
-for n in range(3,5):
+for n in range(3,6):
     # for z in range(6,12):
     # cp ../odd${n}.c rcsf.inp
     path_to_copy_3 = os.path.join(testdir,f'odd{n}.c')
