@@ -63,9 +63,6 @@ class Routine(object):
         self.name = name
         self.inputs=inputs
         self.outputs=outputs
-        #print(f'{name}: {params}')
-        #print(f'{name}: {inputs}')
-        #print(f'{name}: {outputs}')
         self.params=params
         self.hash=hash(self)
 
@@ -122,14 +119,22 @@ class CSFRoutine(Routine):
              path.join(workdir,'rcsf.inp'))
 
 class MPIRoutine(Routine):
-    """ 
+    """
     An MPI Routine implements the MPI version of all the GRASP commands available to us. It makes and sets the MPI_TMP directory at runtime. Do we also need to make a `disks' file?
     """
-    def execute(self,workdir,mpi_tmp,np):
-        if not os.path.exists(mpi_tmp):
-	    os.makedirs(mpi_tmp)
-	self.name = f'mpirun -np {np} {self.name}_mpi'
-	super().execute(workdir)	
+    def execute_mpi(self,workdir,nproc = 4):
+        self.name = f'mpirun -np {nproc} {self.name}_mpi'
+        if hasattr(os.environ,'MPI_TMP'):
+            restore = True
+            old = os.environ['MPI_TMP']
+            warnings.warn('Overriding default $MPI_TMP env var.')
+        os.environ['MPI_TMP'] = os.path.join(workdir,'mpi_tmp')
+        if not os.path.exists:
+            os.makedirs(os.environ['MPI_TMP'])
+        r = super().execute(workdir)
+        if restore:
+            os.environ['MPI_TMP'] = old
+        return r
 
 class Rnucleus(Routine):
     def __init__(self,Z,A,neutralMass,I,NDM,NQM,rms_radius = None,thickness= None):
@@ -371,7 +376,7 @@ class Rwfnestimate(Routine):
 
 WEIGHTINGS = {'Equal':'1','Standard':'5','User [unsupported!]':'9'}
 ORTHONORMALIZATIONS = {'Update': '1', 'Self consistency': '2'}
-class Rmcdhf(Routine):
+class Rmcdhf(MPIRoutine,Routine):
     def __init__(self,asfidx,orbs,specorbs,runs,weighting_method,grid = None, node_threshold = None, integration_method = None,accuracy = None,orthonormalization_order = 'Update',subruns = None):
         """
         Inputs:
