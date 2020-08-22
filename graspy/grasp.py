@@ -63,9 +63,6 @@ class Routine(object):
         self.name = name
         self.inputs=inputs
         self.outputs=outputs
-        #print(f'{name}: {params}')
-        #print(f'{name}: {inputs}')
-        #print(f'{name}: {outputs}')
         self.params=params
         self.hash=hash(self)
 
@@ -121,6 +118,25 @@ class CSFRoutine(Routine):
         move(path.join(workdir,'rcsf.out'),
              path.join(workdir,'rcsf.inp'))
 
+class MPIRoutine(Routine):
+    """
+    An MPI Routine implements the MPI version of all the GRASP commands available to us. It makes and sets the MPI_TMP directory at runtime. Do we also need to make a `disks' file?
+    """
+    def execute_mpi(self,workdir,nproc = 4):
+        restore = False
+        self.name = f'mpirun -np {nproc} {self.name}_mpi'
+        if hasattr(os.environ,'MPI_TMP'):
+            restore = True
+            old = os.environ['MPI_TMP']
+            warnings.warn('Overriding default $MPI_TMP env var.')
+        os.environ['MPI_TMP'] = os.path.join(workdir,'mpi_tmp')
+        if not os.path.exists:
+            os.makedirs(os.environ['MPI_TMP'])
+        r = super().execute(workdir)
+        if restore:
+            os.environ['MPI_TMP'] = old
+        return r
+
 class Rnucleus(Routine):
     def __init__(self,Z,A,neutralMass,I,NDM,NQM,rms_radius = None,thickness= None):
         """
@@ -147,7 +163,7 @@ class Rnucleus(Routine):
                          outputs = ['isodata'])
 
 
-coredict = {'None':0,'He':1,'Ne':2,'Ar':3,'Kr':4,'Xe':5}
+coredict = {'None':0,'He':1,'Ne':2,'Ar':3,'Kr':4,'Xe':5,'Rn':6}
 orderingdict = {'Default':'*','Reverse':'r','Symmetry':'s','User specified':'u'}
 
 class Rcsfgenerate(Routine):
@@ -435,21 +451,21 @@ class Rmcdhf(Routine):
         start_str = "Subshell    Energy    Method   P0    consistency  Norm-1  factor  JP MTP INV NNP"
         #every time 'Subshell ...' (the headers of the table) is found, a table follows
         start_candidates = [i for i,line in enumerate(self.printout) if line == start_str]
-        print(start_candidates)
+        #print(start_candidates)
 
         end_str = "Average energy"
         end_candidates = np.array([i for i,line in enumerate(self.printout) if end_str in line])
-        print(end_candidates)
+        #print(end_candidates)
         correct_end_line = end_candidates[end_candidates > start_candidates[-1]][0]
 
         table = self.printout[start_candidates[-1]+1:correct_end_line-1]
         #prints the contents of the table
-        print(table)
+        #print(table)
         table = filter(None, table)
-        print(table)
+        #print(table)
         #removes the line where None is returned
         table_list = [line.split() for line in table]
-        print(table)
+        #print(table)
         #splits the list of strings of the table into seperate lines
         # print(table_list)
         for line in table_list:
@@ -582,7 +598,7 @@ class Rasfsplit(Routine):
                          outputs= [],
                          params = [booltoyesno(same)])
 
-class Rci(Routine):
+class Rci(MPIRoutine,Routine):
     def __init__(self,calc_name,include_transverse,modify_freq,scale_factor,include_vacpol,include_nms,include_sms,est_self_energy,largest_n,asfidx):
         """
         Inputs:
