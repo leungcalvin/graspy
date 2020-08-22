@@ -19,7 +19,7 @@ def full_calculation(calc_dir,active_set,exc,n_open):
             Rnucleus(Z=70,A=172,neutralMass=171.936378,I=0,NDM=0,NQM=0),
             Rangular(),
             Rwfnestimate(orbdict=
-                {'*':'../../../calc-scripts/cores/yb_6s2master.w'},
+                {'*':'/home/calvinl/graspy/calc-scripts/cores/yb_6s2master.w'},
                          fallback='Thomas-Fermi'),
             Rmcdhf(indices_6s2,orbs=['6s'],specorbs=['*'],weighting_method='Standard',runs=1000),
             Rwfnestimate(orbdict=
