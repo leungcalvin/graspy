@@ -123,6 +123,7 @@ class MPIRoutine(Routine):
     An MPI Routine implements the MPI version of all the GRASP commands available to us. It makes and sets the MPI_TMP directory at runtime. Do we also need to make a `disks' file?
     """
     def execute_mpi(self,workdir,nproc = 4):
+        restore = False
         self.name = f'mpirun -np {nproc} {self.name}_mpi'
         if hasattr(os.environ,'MPI_TMP'):
             restore = True
@@ -376,7 +377,7 @@ class Rwfnestimate(Routine):
 
 WEIGHTINGS = {'Equal':'1','Standard':'5','User [unsupported!]':'9'}
 ORTHONORMALIZATIONS = {'Update': '1', 'Self consistency': '2'}
-class Rmcdhf(MPIRoutine,Routine):
+class Rmcdhf(Routine):
     def __init__(self,asfidx,orbs,specorbs,runs,weighting_method,grid = None, node_threshold = None, integration_method = None,accuracy = None,orthonormalization_order = 'Update',subruns = None):
         """
         Inputs:
@@ -597,7 +598,7 @@ class Rasfsplit(Routine):
                          outputs= [],
                          params = [booltoyesno(same)])
 
-class Rci(Routine):
+class Rci(MPIRoutine,Routine):
     def __init__(self,calc_name,include_transverse,modify_freq,scale_factor,include_vacpol,include_nms,include_sms,est_self_energy,largest_n,asfidx):
         """
         Inputs:
