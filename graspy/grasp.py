@@ -121,6 +121,16 @@ class CSFRoutine(Routine):
         move(path.join(workdir,'rcsf.out'),
              path.join(workdir,'rcsf.inp'))
 
+class MPIRoutine(Routine):
+    """ 
+    An MPI Routine implements the MPI version of all the GRASP commands available to us. It makes and sets the MPI_TMP directory at runtime. Do we also need to make a `disks' file?
+    """
+    def execute(self,workdir,mpi_tmp,np):
+        if not os.path.exists(mpi_tmp):
+	    os.makedirs(mpi_tmp)
+	self.name = f'mpirun -np {np} {self.name}_mpi'
+	super().execute(workdir)	
+
 class Rnucleus(Routine):
     def __init__(self,Z,A,neutralMass,I,NDM,NQM,rms_radius = None,thickness= None):
         """
