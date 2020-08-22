@@ -2,7 +2,7 @@ from graspy.grasp import *
 #
 # This implements the GRASP 2018 calculation for 1s2 2s 2S and 1s2 2p 2P in Li I, as found in the GRASP 2018 manual, using the GRASPy interface.
 #
-testdir = './calc-outputs/example1'
+testdir = '/home/calvin/graspy/calc-outputs/example1'
 initialize(workdir=testdir)
 
 # 1) Generate a multireference consisting of the 1s2 2s and 1s2 2p configurations
@@ -23,14 +23,13 @@ MR_DHF =[
         Rnucleus(Z=3,A=7,neutralMass=6.941,I=1.5,NDM=3.2564268,NQM=-0.04),
         Rangular(),
         Rwfnestimate(orbdict = None, fallback='Thomas-Fermi'),
-        Rmcdhf([[1],[1],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard'),
-        Rsave('2s_2p_DF')
         ]
-printouts = [cmd.execute(workdir = testdir) for cmd in MR_DHF]
-printouts = printouts[3]
-df = printouts[0:]
-print(df)
-print(df['Energy'])
+for cmd in MR_DHF:
+    cmd.execute(workdir = testdir)
+
+Rmcdhf([[1],[1],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard').execute(workdir = testdir)
+input('Stop here! Check RMCHDF output')
+Rsave('2s_2p_DF').execute(workdir = testdir)
 
 # 3) Generate a CAS expansion from the 2S configuration.
 CAS_2S_exp = Rcsfgenerate(core='None',ordering = 'Default',
@@ -38,6 +37,7 @@ CAS_2S_exp = Rcsfgenerate(core='None',ordering = 'Default',
             active_set=[3,3,3],
             jlower=1,jhigher=1,exc=3,write_csf = 'rcsf.inp')
 CAS_2S_exp.execute(workdir = testdir)
+input('CAS_2S OK?')
 
 # 4) Solve for the n=3 correlation orbitals, using orbitals generated from 2s_2p_DF.w above.
 indices_2S = [[1]]
@@ -50,27 +50,23 @@ CAS_2S = [
             runs = 100, weighting_method = 'Standard'),
         Rsave('2s_3')
         ]
-printouts_2 = [cmd.execute(workdir = testdir) for cmd in CAS_2S]
-printouts_2 = printouts_2[2]
-df = printouts_2[0:]
-print(df)
-print(df['Energy'])
+for cmd in CAS_2S:
+    cmd.execute(workdir = testdir)
+    input(f'{cmd.name} OK?')
 
 # 5) Perform CI on the 2S expansion.
-CI_2S = [
-        Rci(calc_name='2s_3',
-                include_transverse=True,
-                modify_freq=True,
-                scale_factor='1.d-6',
-                include_vacpol = True,
-                include_nms= False,
-                include_sms = False,
-                est_self_energy= True,
-                largest_n = 3,
-                asfidx = indices_2S),
-        JJtoLSJ(calc_name= '2s_3',use_ci = True, unique = True),
-        ]
-[cmd.execute(workdir = testdir) for cmd in CI_2S]
+Rci(calc_name='2s_3',
+    include_transverse=True,
+    modify_freq=True,
+    scale_factor='1.d-6',
+    include_vacpol = True,
+    include_nms= False,
+    include_sms = False,
+    est_self_energy= True,
+    largest_n = 3,
+    asfidx = indices_2S).execute_mpi(workdir = testdir, nproc = 4),
+
+JJtoLSJ(calc_name= '2s_3',use_ci = True, unique = True).execute(workdir = testdir)
 
 # 6) Generate a CAS expansion from the 2P configuration.
 CAS_2P_exp = Rcsfgenerate(core='None',ordering = 'Default',
@@ -89,27 +85,27 @@ CAS_2P = [
         Rsave('2p_3')
         ]
 [cmd.execute(workdir = testdir) for cmd in CAS_2P]
+input('CAS_2P OK?')
 
 # 8) Perform CI on the 2P expansion.
-CI_2P = [
-        Rci(calc_name='2p_3',
-                include_transverse=True,
-                modify_freq=True,
-                scale_factor='1.d-6',
-                include_vacpol = True,
-                include_nms= False,
-                include_sms = False,
-                est_self_energy= True,
-                largest_n = 3,
-                asfidx = indices_2P),
-        JJtoLSJ(calc_name= '2p_3',use_ci = True, unique = True),
-        ]
-[cmd.execute(workdir = testdir) for cmd in CI_2P]
+
+Rci(calc_name='2p_3',
+    include_transverse=True,
+    modify_freq=True,
+    scale_factor='1.d-6',
+    include_vacpol = True,
+    include_nms= False,
+    include_sms = False,
+    est_self_energy= True,
+    largest_n = 3,
+    asfidx = indices_2P).execute_mpi(workdir = testdir, nproc = 4),
+JJtoLSJ(calc_name= '2p_3',use_ci = True, unique = True).execute(workdir = testdir)
+input('CI_2P OK?')
 
 # 9) Calculate transitions.
 transitions_2P = [
-        Rhfs(calcname = '2p_3',use_ci=True),
-        Rbiotransform(use_ci=True,calcname_initial = '2s_3',calcname_final = '2p_3', transform_all = True),
-        Rtransition(use_ci=True,calcname_initial = '2s_3',calcname_final = '2p_3',transition_spec = ['E1'])]
+        Rhfs(calc_name = '2p_3',use_ci=True),
+        Rbiotransform(use_ci=True,calc_name_initial = '2s_3',calc_name_final = '2p_3', transform_all = True),
+        Rtransition(use_ci=True,calc_name_initial = '2s_3',calc_name_final = '2p_3',transition_spec = ['E1'])]
 
 [cmd.execute(workdir = testdir) for cmd in transitions_2P]
