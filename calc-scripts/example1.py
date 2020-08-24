@@ -2,7 +2,7 @@ from graspy.grasp import *
 #
 # This implements the GRASP 2018 calculation for 1s2 2s 2S and 1s2 2p 2P in Li I, as found in the GRASP 2018 manual, using the GRASPy interface.
 #
-testdir = '/home/calvin/graspy/calc-outputs/example1'
+testdir = '/nobackup/users/calvinl/calc-outputs/example1_mpi'
 initialize(workdir=testdir)
 
 # 1) Generate a multireference consisting of the 1s2 2s and 1s2 2p configurations
@@ -28,7 +28,6 @@ for cmd in MR_DHF:
     cmd.execute(workdir = testdir)
 
 Rmcdhf([[1],[1],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard').execute(workdir = testdir)
-input('Stop here! Check RMCHDF output')
 Rsave('2s_2p_DF').execute(workdir = testdir)
 
 # 3) Generate a CAS expansion from the 2S configuration.
@@ -37,7 +36,6 @@ CAS_2S_exp = Rcsfgenerate(core='None',ordering = 'Default',
             active_set=[3,3,3],
             jlower=1,jhigher=1,exc=3,write_csf = 'rcsf.inp')
 CAS_2S_exp.execute(workdir = testdir)
-input('CAS_2S OK?')
 
 # 4) Solve for the n=3 correlation orbitals, using orbitals generated from 2s_2p_DF.w above.
 indices_2S = [[1]]
@@ -52,7 +50,6 @@ CAS_2S = [
         ]
 for cmd in CAS_2S:
     cmd.execute(workdir = testdir)
-    input(f'{cmd.name} OK?')
 
 # 5) Perform CI on the 2S expansion.
 Rci(calc_name='2s_3',
@@ -64,7 +61,7 @@ Rci(calc_name='2s_3',
     include_sms = False,
     est_self_energy= True,
     largest_n = 3,
-    asfidx = indices_2S).execute_mpi(workdir = testdir, nproc = 4),
+    asfidx = indices_2S).execute_mpi(workdir = testdir, nproc = 8),
 
 JJtoLSJ(calc_name= '2s_3',use_ci = True, unique = True).execute(workdir = testdir)
 
@@ -85,7 +82,6 @@ CAS_2P = [
         Rsave('2p_3')
         ]
 [cmd.execute(workdir = testdir) for cmd in CAS_2P]
-input('CAS_2P OK?')
 
 # 8) Perform CI on the 2P expansion.
 
@@ -98,9 +94,8 @@ Rci(calc_name='2p_3',
     include_sms = False,
     est_self_energy= True,
     largest_n = 3,
-    asfidx = indices_2P).execute_mpi(workdir = testdir, nproc = 4),
+    asfidx = indices_2P).execute_mpi(workdir = testdir, nproc = 8),
 JJtoLSJ(calc_name= '2p_3',use_ci = True, unique = True).execute(workdir = testdir)
-input('CI_2P OK?')
 
 # 9) Calculate transitions.
 transitions_2P = [
