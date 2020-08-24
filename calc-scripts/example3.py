@@ -1,6 +1,6 @@
 from graspy.grasp import *
 
-calcdir = '/home/calvin/graspy/calc-outputs/example3'
+calcdir = '/home/calvinl/graspy/calc-outputs/example3'
 initialize(workdir=calcdir)
 
 ref_a = Rcsfgenerate(core='None',ordering = 'Default',
@@ -72,4 +72,3 @@ transitions_2P = [
         Rtransition(use_ci=True,calc_name_initial = '2s22p3_2p5_3',calc_name_final = '2s22p3_2p5_3',transition_spec = ['E1'])]
 
 [cmd.execute(workdir = calcdir) for cmd in transitions_2P]
-assert 0
