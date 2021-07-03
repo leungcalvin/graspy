@@ -1,3 +1,7 @@
+''' 
+Flexible command line arguments for radium calculations
+Laasya(ASDRP-2020)
+'''
 from graspy.grasp import *
 import sys
 from shutil import copyfile
