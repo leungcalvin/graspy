@@ -2,7 +2,8 @@ from graspy.grasp import *
 #
 # This implements the GRASP 2018 calculation for 1s2 2s 2S and 1s2 2p 2P in Li I, as found in the GRASP 2018 manual, using the GRASPy interface.
 #
-testdir = '/nobackup/users/calvinl/calc-outputs/example1_mpi'
+#testdir = '/nobackup/users/calvinl/calc-outputs/example1_mpi'
+testdir = 'calc-outputs/example1_mpi'
 initialize(workdir=testdir)
 
 # 1) Generate a multireference consisting of the 1s2 2s and 1s2 2p configurations
