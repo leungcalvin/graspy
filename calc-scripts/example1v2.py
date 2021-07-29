@@ -18,7 +18,11 @@ ref_2p = Rcsfgenerate(core='None',ordering = 'Default',
 
 # The three states which make up the multireference can be added together with arithmetic.
 mr = ref_2s + ref_2p
-mr.execute(workdir = testdir) #the execute() method performs the actual call to GRASP 2018.
+mr.execute(workdir = testdir)
+ 
+#tried changing to execute_mpi (v3)
+
+#the execute() method performs the actual call to GRASP 2018.
 # 2) Perform a SCF procedure to solve for the 1s,2s,2p orbitals.
 MR_DHF =[
         Rnucleus(Z=3,A=7,neutralMass=6.941,I=1.5,NDM=3.2564268,NQM=-0.04),
@@ -28,8 +32,14 @@ MR_DHF =[
 for cmd in MR_DHF:
     cmd.execute(workdir = testdir)
 
-Rmcdhf([[1],[1],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard').execute(workdir = testdir)
+#tried changing to execute_mpi (v4)
+
+Rmcdhf([[1],[1],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard').execute_mpi(workdir = testdir)
+
+#added execute_mpi to rmcdhf
 Rsave('2s_2p_DF').execute(workdir = testdir)
+
+#tried changing to execute_mpi (v5)
 
 # 3) Generate a CAS expansion from the 2S configuration.
 CAS_2S_exp = Rcsfgenerate(core='None',ordering = 'Default',
@@ -37,6 +47,8 @@ CAS_2S_exp = Rcsfgenerate(core='None',ordering = 'Default',
             active_set=[3,3,3],
             jlower=1,jhigher=1,exc=3,write_csf = 'rcsf.inp')
 CAS_2S_exp.execute(workdir = testdir)
+
+#tried changing to execute_mpi (v6)
 
 # 4) Solve for the n=3 correlation orbitals, using orbitals generated from 2s_2p_DF.w above.
 indices_2S = [[1]]
@@ -52,6 +64,8 @@ CAS_2S = [
 for cmd in CAS_2S:
     cmd.execute(workdir = testdir)
 
+#tried changing to execute_mpi (v7)
+
 # 5) Perform CI on the 2S expansion.
 Rci(calc_name='2s_3',
     include_transverse=True,
@@ -66,6 +80,8 @@ Rci(calc_name='2s_3',
 
 JJtoLSJ(calc_name= '2s_3',use_ci = True, unique = True).execute(workdir = testdir)
 
+#tried changing to execute_mpi (v8)
+
 # 6) Generate a CAS expansion from the 2P configuration.
 CAS_2P_exp = Rcsfgenerate(core='None',ordering = 'Default',
             csflist=['1s(2,*)2p(1,*)'],
@@ -73,6 +89,8 @@ CAS_2P_exp = Rcsfgenerate(core='None',ordering = 'Default',
             jlower=1,jhigher=3,exc=3)
 
 CAS_2P_exp.execute(workdir = testdir)
+
+#tried changing to execute_mpi (v9)
 
 # 7) Solve for the n=3 correlation orbitals, using orbitals generated from 2s_2p_DF.w above.
 indices_2P = [[1],[1]]
@@ -83,6 +101,8 @@ CAS_2P = [
         Rsave('2p_3')
         ]
 [cmd.execute(workdir = testdir) for cmd in CAS_2P]
+
+#tried changing to execute_mpi (v10)
 
 # 8) Perform CI on the 2P expansion.
 
@@ -98,6 +118,8 @@ Rci(calc_name='2p_3',
     asfidx = indices_2P).execute_mpi(workdir = testdir, nproc = 8),
 JJtoLSJ(calc_name= '2p_3',use_ci = True, unique = True).execute(workdir = testdir)
 
+#tried changing to execute_mpi (v11)
+
 # 9) Calculate transitions.
 transitions_2P = [
         Rhfs(calc_name = '2p_3',use_ci=True),
@@ -105,3 +127,5 @@ transitions_2P = [
         Rtransition(use_ci=True,calc_name_initial = '2s_3',calc_name_final = '2p_3',transition_spec = ['E1'])]
 
 [cmd.execute(workdir = testdir) for cmd in transitions_2P]
+
+#tried changing to execute_mpi (v12)
