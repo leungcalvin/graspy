@@ -1,6 +1,6 @@
 from graspy.grasp import *
 
-calcdir = 'calc-outputs/example3_mpi'
+calcdir = '/home/calvinl/graspy/calc-outputs/example3'
 initialize(workdir=calcdir)
 
 ref_a = Rcsfgenerate(core='None',ordering = 'Default',
