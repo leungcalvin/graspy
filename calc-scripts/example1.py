@@ -31,7 +31,7 @@ for cmd in MR_DHF:
 <<<<<<< HEAD:calc-scripts/example1v2.py
 #tried changing to execute_mpi (v4)
 
-Rmcdhf([[1],[1],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard').execute(workdir = testdir)
+Rmcdhf([[1],[1],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard').execute_mpi(workdir = testdir)
 
 #added execute_mpi to rmcdhf
 =======
