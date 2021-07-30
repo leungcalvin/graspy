@@ -34,7 +34,7 @@ for cmd in MR_DHF:
 
 #tried changing to execute_mpi (v4)
 
-Rmcdhf([[1],[1],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard').execute_mpi(workdir = testdir)
+Rmcdhf([[1],[1],[1]],orbs = ['*'],specorbs = ['*'], runs = 100, weighting_method = 'Standard').execute(workdir = testdir)
 
 #added execute_mpi to rmcdhf
 Rsave('2s_2p_DF').execute(workdir = testdir)
