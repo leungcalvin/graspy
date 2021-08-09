@@ -1,9 +1,6 @@
-import graspy.grasp
 from graspy.grasp import *
-print(graspy.__file__)
 #ex4_workdir = '/home/cleu/example4_mpi'
-ex4_workdir = '/home/cle1/arjunb/graspy/calc-scripts/calc-outputs/example4_mpi'
-#ex4_workdir = 'home/cle1/arjunb/calc-scripts/calc-outputs/example4_mpi'
+ex4_workdir = '/home/cle1/arjunb/graspy/calc-scripts/calc-outputs/test_folder_ex4/example4_mpi'
 initialize(workdir=ex4_workdir)
 
 Rnucleus(Z=26,A=56,neutralMass=55.845,I=1,NDM=1,NQM=1).execute(workdir=ex4_workdir)
